@@ -7,187 +7,187 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { display: flex; justify-content: center; background-color: #f3f4f6; margin: 0; }
+        body { display: flex; justify-content: center; background-color: #f3f4f6; margin: 0; font-family: sans-serif; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; background: white; overflow: hidden; display: flex; flex-direction: column; }
         #map { flex-grow: 1; width: 100%; }
-        .bottom-sheet { max-height: 55%; overflow-y: auto; border-radius: 28px 28px 0 0; background: white; box-shadow: 0 -10px 25px rgba(0,0,0,0.1); z-index: 40; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .bottom-sheet { max-height: 50%; overflow-y: auto; border-radius: 24px 24px 0 0; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900 to-transparent pt-6 pb-12 px-6 pointer-events-none">
-        <h1 class="text-white text-2xl font-black tracking-tighter italic shadow-sm">TEM METRÔ LÁ?</h1>
-        <p class="text-blue-200 text-xs font-medium">Encontre a estação mais próxima agora</p>
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-700 to-transparent pt-6 pb-12 px-6 pointer-events-none">
+        <h1 class="text-white text-2xl font-black tracking-tighter drop-shadow-md">TEM METRÔ LÁ <span class="text-blue-300">?</span></h1>
+        <p class="text-blue-100 text-xs font-medium opacity-90">Encontre a estação mais próxima agora</p>
     </div>
 
     <div class="absolute top-24 left-0 right-0 z-20 px-4">
-        <div class="bg-white rounded-2xl shadow-xl p-2 flex items-center space-x-2 border border-gray-100">
-            <input type="text" id="pac-input" placeholder="Buscar endereço..." class="w-full outline-none text-sm text-gray-700 px-3 py-2">
+        <div class="bg-white rounded-2xl shadow-xl p-2 flex items-center space-x-3 border border-gray-100">
+            <i class="fas fa-search text-gray-400 ml-2"></i>
+            <input type="text" id="pac-input" placeholder="Buscar outro endereço..." class="w-full outline-none text-sm text-gray-700 bg-transparent">
             <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">PESQUISAR</button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-sheet px-6 pb-8 no-scrollbar">
+    <div class="bottom-sheet bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-40 px-6 pt-2 pb-8 no-scrollbar">
         <div class="flex justify-center p-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="main-card">
-            <div class="flex items-center space-x-2 mb-1">
-                <span id="main-label" class="text-[9px] font-black px-2 py-0.5 rounded text-white bg-gray-400 uppercase italic">---</span>
-                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mais Próxima</span>
-            </div>
-            <h2 id="main-name" class="text-xl font-extrabold text-gray-800 uppercase leading-tight">Buscando estações...</h2>
-            
-            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-3 flex justify-between items-center">
-                <div class="flex-1 overflow-hidden">
-                    <p id="main-addr" class="text-sm font-semibold text-gray-700 truncate italic">Aguardando localização...</p>
-                    <p class="text-[10px] text-green-600 font-bold mt-1 tracking-widest uppercase">● ABERTA AGORA</p>
+        <div id="main-card" class="mb-6">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-blue-600">Mais próxima de você</span>
+            <h2 id="main-station-name" class="text-xl font-extrabold text-gray-800 uppercase">Buscando...</h2>
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-2 flex justify-between items-center">
+                <div class="flex-1 overflow-hidden pr-2">
+                    <p id="main-station-addr" class="text-sm font-semibold text-gray-700 truncate">Aguardando localização</p>
+                    <p id="main-station-dist" class="text-xs text-gray-500">Calculando distância...</p>
                 </div>
+                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded shrink-0">ABERTA</span>
             </div>
-            
-            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-4 bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg transition-all active:scale-95">
-                <i class="fas fa-location-arrow"></i> <span>COMO CHEGAR LÁ</span>
+            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-3 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center space-x-2 text-sm shadow-lg shadow-blue-100">
+                <i class="fas fa-directions"></i> <span>COMO CHEGAR LÁ</span>
             </a>
         </div>
 
-        <h3 class="text-[11px] font-bold text-gray-400 uppercase mt-8 mb-4 tracking-tighter border-b pb-2">Outras estações nos arredores</h3>
-        <div id="list-container" class="space-y-3">
-            <p class="text-xs text-gray-400 italic">Procurando trens e metrôs próximos...</p>
-        </div>
+        <hr class="border-gray-100 mb-4">
+
+        <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Outras estações nos arredores</h3>
+        <div id="list-container" class="space-y-3 pb-4">
+            </div>
     </div>
 </div>
 
 <script>
-    let map, service, markers = [];
+    let map, service, infoWindow, userPos, markers = [];
     const apiKey = "AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU";
 
-    const getStyle = (name) => {
+    // Mapeamento de Cores e Tipos
+    const getStationData = (name) => {
         const n = name.toLowerCase();
-        if (n.includes('azul')) return { hex: '#005596', color: 'blue', type: 'METRÔ' };
-        if (n.includes('verde')) return { hex: '#007e5e', color: 'green', type: 'METRÔ' };
-        if (n.includes('vermelha')) return { hex: '#ee3135', color: 'red', type: 'METRÔ' };
-        if (n.includes('amarela')) return { hex: '#fff000', color: 'yellow', type: 'METRÔ' };
-        if (n.includes('lilás') || n.includes('lilas')) return { hex: '#93278f', color: 'purple', type: 'METRÔ' };
-        if (n.includes('prata')) return { hex: '#9e9f9f', color: 'gray', type: 'METRÔ' };
-        if (n.includes('cptm') || n.includes('trem') || n.includes('rubi') || n.includes('diamante') || n.includes('esmeralda') || n.includes('turquesa') || n.includes('coral') || n.includes('safira') || n.includes('jade')) {
-            return { hex: '#f6821f', color: 'orange', type: 'TREM' };
-        }
-        return { hex: '#3b82f6', color: 'blue', type: 'METRÔ' };
+        let color = 'orange'; // Cor padrão (Trens/Outros)
+        let type = 'TREM';
+
+        if (n.includes('azul')) { color = 'blue'; type = 'METRÔ'; }
+        else if (n.includes('verde')) { color = 'green'; type = 'METRÔ'; }
+        else if (n.includes('vermelha')) { color = 'red'; type = 'METRÔ'; }
+        else if (n.includes('amarela')) { color = 'yellow'; type = 'METRÔ'; }
+        else if (n.includes('lilás') || n.includes('lilas')) { color = 'purple'; type = 'METRÔ'; }
+        else if (n.includes('prata')) { color = 'gray'; type = 'METRÔ'; }
+        else if (n.includes('metrô') || n.includes('metro')) { type = 'METRÔ'; color = 'blue'; }
+
+        return { color, type };
     };
 
     function initMap() {
-        // Inicia no centro de SP por padrão
-        const sp = { lat: -23.5505, lng: -46.6333 };
+        const defaultPos = { lat: -23.5505, lng: -46.6333 };
         map = new google.maps.Map(document.getElementById("map"), {
+            center: defaultPos,
             zoom: 15,
-            center: sp,
             disableDefaultUI: true
         });
 
-        service = new google.maps.places.PlacesService(map);
+        infoWindow = new google.maps.InfoWindow();
 
-        // Autocomplete
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((position) => {
+                userPos = { lat: position.coords.latitude, lng: position.coords.longitude };
+                map.setCenter(userPos);
+                new google.maps.Marker({
+                    position: userPos,
+                    map: map,
+                    icon: 'http://maps.google.com/mapfiles/ms/icons/man.png'
+                });
+                findStations(userPos);
+            }, () => { 
+                console.log("GPS negado, usando padrão.");
+                findStations(defaultPos);
+            });
+        }
+
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
         document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
             if (place && place.geometry) {
-                map.setCenter(place.geometry.location);
-                searchStations(place.geometry.location);
+                userPos = place.geometry.location;
+                map.setCenter(userPos);
+                findStations(userPos);
             }
         });
-
-        // GPS Real
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((p) => {
-                const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
-                map.setCenter(pos);
-                new google.maps.Marker({ 
-                    position: pos, 
-                    map: map, 
-                    icon: 'https://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' 
-                });
-                searchStations(pos);
-            }, () => {
-                // Se o GPS falhar, busca na posição padrão (Centro)
-                searchStations(sp);
-            });
-        } else {
-            searchStations(sp);
-        }
     }
 
-    function searchStations(location) {
+    function findStations(location) {
         const request = {
             location: location,
-            radius: '5000', // Aumentado para 5km
+            radius: '4000',
             types: ['subway_station', 'train_station', 'transit_station']
         };
 
+        service = new google.maps.places.PlacesService(map);
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                // Filtro para garantir que é estação
-                const stations = results.filter(r => 
+                // Filtra para garantir que são estações de trilhos
+                const filtered = results.filter(r => 
                     r.name.toLowerCase().includes('estação') || 
                     r.name.toLowerCase().includes('metrô') ||
+                    r.name.toLowerCase().includes('trem') ||
                     r.name.toLowerCase().includes('cptm')
                 );
-                updateUI(stations);
+                updateUI(filtered);
             }
         });
     }
 
     function updateUI(results) {
-        if (results.length === 0) {
-            document.getElementById('main-name').innerText = "Nenhuma estação próxima";
-            return;
-        }
+        if (results.length === 0) return;
 
-        // Limpar lista e markers antigos
-        document.getElementById('list-container').innerHTML = "";
+        // Limpa pins antigos
         markers.forEach(m => m.setMap(null));
         markers = [];
 
-        // 1. Preencher Card Principal
+        // 1. Destaque (Mais Próxima)
         const top = results[0];
-        const topStyle = getStyle(top.name);
-        document.getElementById('main-name').innerText = top.name;
-        document.getElementById('main-addr').innerText = top.vicinity;
-        document.getElementById('main-label').innerText = topStyle.type;
-        document.getElementById('main-label').style.backgroundColor = topStyle.hex;
+        document.getElementById('main-station-name').innerText = top.name;
+        document.getElementById('main-station-addr').innerText = top.vicinity;
+        document.getElementById('main-station-dist').innerText = "Estação de trilhos mais próxima";
         document.getElementById('main-btn-route').href = `https://www.google.com/maps/dir/?api=1&destination=${top.geometry.location.lat()},${top.geometry.location.lng()}`;
 
-        // 2. Pins e Lista
-        results.forEach((place, i) => {
-            const style = getStyle(place.name);
-            
-            // Criar Marcador
+        // 2. Lista de Outras
+        const listContainer = document.getElementById('list-container');
+        listContainer.innerHTML = "";
+
+        results.forEach((place, index) => {
+            const data = getStationData(place.name);
+
+            // Criar Marcadores Coloridos
             const marker = new google.maps.Marker({
                 position: place.geometry.location,
                 map: map,
-                icon: `https://maps.google.com/mapfiles/ms/icons/${style.color}-dot.png`,
-                title: place.name
+                title: place.name,
+                icon: `http://maps.google.com/mapfiles/ms/icons/${data.color}-dot.png`
             });
             markers.push(marker);
 
-            // Adicionar na lista (pula a primeira que já está no card)
-            if (i > 0 && i < 10) {
-                const item = document.createElement('div');
-                item.className = "flex justify-between items-center p-4 bg-gray-50 rounded-2xl border-l-4 shadow-sm";
-                item.style.borderLeftColor = style.hex;
-                item.innerHTML = `
+            marker.addListener("click", () => {
+                infoWindow.setContent(`<div style="color:#000"><b>${place.name}</b><br><span style="font-size:10px">${data.type}</span></div>`);
+                infoWindow.open(map, marker);
+            });
+
+            // Adiciona na lista (pula a primeira que já está no card principal)
+            if (index > 0 && index < 8) {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-xl shadow-sm";
+                div.innerHTML = `
                     <div class="flex-1 overflow-hidden pr-2">
-                        <span class="text-[8px] font-black text-gray-400 uppercase">${style.type}</span>
-                        <h4 class="text-sm font-bold text-gray-800 truncate">${place.name}</h4>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">[ ${data.type} ]</p>
+                        <p class="text-sm font-bold text-gray-800 truncate">${place.name}</p>
                     </div>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-white p-2 rounded-lg border border-gray-100">
-                        <i class="fas fa-directions text-blue-600 text-xs"></i>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-blue-50 p-2 rounded-lg">
+                         <i class="fas fa-location-arrow text-blue-600 text-xs"></i>
                     </a>
                 `;
-                document.getElementById('list-container').appendChild(item);
+                listContainer.appendChild(div);
             }
         });
     }
