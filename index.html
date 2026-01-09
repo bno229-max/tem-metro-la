@@ -3,114 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tem Metrô Lá</title>
+    <title>Tabela Clara - Tem Metrô Lá?</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { display: flex; justify-content: center; background-color: #f3f4f6; margin: 0; font-family: sans-serif; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; background: white; overflow: hidden; display: flex; flex-direction: column; }
         #map { flex-grow: 1; width: 100%; }
-        .bottom-sheet { max-height: 55%; overflow-y: auto; border-radius: 24px 24px 0 0; position: relative; transition: all 0.3s ease; }
+        .bottom-sheet { max-height: 50%; overflow-y: auto; border-radius: 24px 24px 0 0; position: relative; background: white; box-shadow: 0 -10px 25px rgba(0,0,0,0.1); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .pulse { animation: pulse-animation 2s infinite; }
+        @keyframes pulse-animation { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-700 to-transparent pt-6 pb-12 px-6 pointer-events-none">
-        <h1 class="text-white text-2xl font-black tracking-tighter drop-shadow-md">TEM METRÔ LÁ <span class="text-blue-300">?</span></h1>
-        <p class="text-blue-100 text-xs font-medium opacity-90">Encontre a estação mais próxima agora</p>
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-slate-900 to-transparent pt-6 pb-12 px-6 pointer-events-none">
+        <h1 class="text-white text-2xl font-black tracking-tighter italic">TEM METRÔ LÁ?</h1>
+        <p class="text-blue-300 text-[10px] font-bold tracking-widest uppercase">Powered by Tabela Clara v2.5</p>
     </div>
 
-    <div class="absolute top-24 left-0 right-0 z-20 px-4">
-        <div class="bg-white rounded-2xl shadow-xl p-2 flex items-center space-x-3 border border-gray-100">
-            <i class="fas fa-search text-gray-400 ml-2"></i>
-            <input type="text" id="pac-input" placeholder="Buscar outro endereço..." class="w-full outline-none text-sm text-gray-700 bg-transparent">
-            <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">PESQUISAR</button>
+    <div class="absolute top-20 left-0 right-0 z-20 px-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-2 flex items-center space-x-2 border border-gray-100">
+            <div class="pl-2"><i class="fas fa-search text-gray-400"></i></div>
+            <input type="text" id="pac-input" placeholder="Digite um endereço ou lugar..." class="w-full outline-none text-sm text-gray-700 py-2">
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-sheet bg-white shadow-[0_-10px_30px_rgba(0,0,0,0.1)] z-40 px-6 pt-2 pb-8 no-scrollbar">
-        <div class="flex justify-center p-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+    <div class="bottom-sheet z-40 px-6 pb-8 no-scrollbar">
+        <div class="flex justify-center p-3"><div class="w-12 h-1.5 bg-gray-200 rounded-full"></div></div>
         
-        <div id="main-card" class="mb-6">
-            <span id="main-type-tag" class="text-[9px] font-bold uppercase tracking-widest bg-blue-100 text-blue-700 px-2 py-0.5 rounded mr-2">Buscando...</span>
-            <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Mais próxima</span>
-            <h2 id="main-station-name" class="text-xl font-extrabold text-gray-800 mt-1 uppercase">Localizando...</h2>
-            
-            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-3 flex justify-between items-center">
-                <div class="flex-1">
-                    <p id="main-station-addr" class="text-sm font-semibold text-gray-700 truncate">Permita o acesso ao GPS</p>
-                    <p id="main-station-dist" class="text-xs text-gray-500 mt-1">Calculando rota...</p>
-                </div>
-                <div class="ml-4 flex flex-col items-end">
-                    <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded">ABERTA</span>
-                </div>
-            </div>
-            
-            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg shadow-blue-100">
-                <i class="fas fa-directions"></i> <span>COMO CHEGAR LÁ</span>
-            </a>
+        <div id="status-msg" class="text-center py-4 text-gray-400 text-sm italic pulse">
+            Aguardando localização ou pesquisa...
         </div>
 
-        <h3 class="text-[11px] font-bold text-gray-400 uppercase mb-3 tracking-wider">Outras opções nos arredores</h3>
-        <div id="list-container" class="space-y-3">
+        <div id="results-content" class="hidden">
+            <div id="main-card" class="mb-6">
+                <div class="flex items-center space-x-2 mb-1">
+                    <span id="main-type" class="text-[9px] font-black px-2 py-0.5 rounded text-white bg-blue-600 uppercase">Metrô</span>
+                    <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mais Próxima</span>
+                </div>
+                <h2 id="main-name" class="text-2xl font-black text-gray-800 uppercase leading-tight mb-3">---</h2>
+                
+                <a id="main-link" href="#" target="_blank" class="block bg-slate-900 hover:bg-black text-white p-4 rounded-2xl transition-all shadow-lg">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p id="main-addr" class="text-xs text-slate-400 truncate w-48">Clique para ver no mapa</p>
+                            <p class="text-sm font-bold mt-1">TRAÇAR ROTA AGORA</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-slate-600"></i>
+                    </div>
+                </a>
             </div>
+
+            <h3 class="text-[11px] font-bold text-gray-400 uppercase mb-4 tracking-tighter border-b pb-2">Outras Estações Próximas</h3>
+            <div id="list-container" class="space-y-3"></div>
+        </div>
     </div>
 </div>
 
 <script>
-    let map, service, infoWindow, markers = [];
+    let map, service, markers = [];
 
-    // Mapeamento de cores para as linhas de SP
-    const getLineStyle = (name) => {
+    // Lógica de Cores por Linha
+    const getStyle = (name) => {
         const n = name.toLowerCase();
-        if (n.includes('azul')) return { color: 'blue', hex: '#005596', type: 'Metrô' };
-        if (n.includes('verde')) return { color: 'green', hex: '#007e5e', type: 'Metrô' };
-        if (n.includes('vermelha')) return { color: 'red', hex: '#ee3135', type: 'Metrô' };
-        if (n.includes('amarela')) return { color: 'yellow', hex: '#fff000', type: 'Metrô' };
-        if (n.includes('lilás') || n.includes('lilas')) return { color: 'purple', hex: '#93278f', type: 'Metrô' };
-        if (n.includes('prata')) return { color: 'gray', hex: '#9e9f9f', type: 'Metrô' };
-        if (n.includes('turquesa') || n.includes('coral') || n.includes('safira') || n.includes('rubi') || n.includes('diamante') || n.includes('esmeralda') || n.includes('jade')) return { color: 'orange', hex: '#f6821f', type: 'Trem' };
-        
-        // Se não achar cor no nome, mas for trem
-        if (n.includes('cptm') || n.includes('estação de trem')) return { color: 'orange', hex: '#f6821f', type: 'Trem' };
-        return { color: 'red', hex: '#3b82f6', type: 'Metrô' }; // Default
+        if (n.includes('azul')) return { hex: '#005596', label: 'METRÔ', color: 'blue' };
+        if (n.includes('verde')) return { hex: '#007e5e', label: 'METRÔ', color: 'green' };
+        if (n.includes('vermelha')) return { hex: '#ee3135', label: 'METRÔ', color: 'red' };
+        if (n.includes('amarela')) return { hex: '#fff000', label: 'METRÔ', color: 'yellow' };
+        if (n.includes('lilás') || n.includes('lilas')) return { hex: '#93278f', label: 'METRÔ', color: 'purple' };
+        if (n.includes('prata')) return { hex: '#9e9f9f', label: 'METRÔ', color: 'gray' };
+        // Trens CPTM
+        const tremLines = ['rubi','diamante','esmeralda','turquesa','coral','safira','jade'];
+        if (tremLines.some(l => n.includes(l)) || n.includes('cptm') || n.includes('trem')) {
+            return { hex: '#f6821f', label: 'TREM', color: 'orange' };
+        }
+        return { hex: '#3b82f6', label: 'METRÔ', color: 'blue' };
     };
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 15,
+            zoom: 14,
             center: { lat: -23.5505, lng: -46.6333 },
-            disableDefaultUI: true
+            disableDefaultUI: true,
+            styles: [{ featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }]
         });
 
-        infoWindow = new google.maps.InfoWindow();
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
-                map.setCenter(pos);
-                new google.maps.Marker({ position: pos, map: map, icon: 'http://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' });
-                findStations(pos);
-            });
-        }
-
-        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
-        document.getElementById("search-btn").addEventListener("click", () => {
+        const input = document.getElementById("pac-input");
+        const autocomplete = new google.maps.places.Autocomplete(input);
+        
+        autocomplete.addListener("place_changed", () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) {
+            if (place.geometry) {
                 map.setCenter(place.geometry.location);
-                findStations(place.geometry.location);
+                map.setZoom(15);
+                searchStations(place.geometry.location);
             }
         });
+
+        // Tenta GPS, mas não trava o app se falhar
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (p) => {
+                    const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
+                    map.setCenter(pos);
+                    searchStations(pos);
+                },
+                () => { document.getElementById('status-msg').innerText = "Busque um endereço acima ↑"; }
+            );
+        }
     }
 
-    function findStations(location) {
+    function searchStations(loc) {
         const request = {
-            location: location,
+            location: loc,
             radius: '3000',
             types: ['subway_station', 'train_station', 'transit_station']
         };
@@ -118,70 +128,57 @@
         service = new google.maps.places.PlacesService(map);
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                // Filtra para remover paradas de ônibus comuns
                 const filtered = results.filter(r => 
-                    r.name.toLowerCase().includes('estação') || 
-                    r.name.toLowerCase().includes('metrô') || 
-                    r.name.toLowerCase().includes('trem')
+                    r.name.toLowerCase().includes('estação') || r.name.toLowerCase().includes('metrô')
                 );
-                updateUI(filtered);
+                renderUI(filtered);
             }
         });
     }
 
-    function updateUI(results) {
-        if (results.length === 0) return;
-
-        // Limpa marcadores anteriores
+    function renderUI(places) {
+        if (places.length === 0) return;
+        
+        document.getElementById('status-msg').classList.add('hidden');
+        document.getElementById('results-content').classList.remove('hidden');
+        
+        const list = document.getElementById('list-container');
+        list.innerHTML = "";
         markers.forEach(m => m.setMap(null));
         markers = [];
 
-        // 1. Destaque (Primeira da lista)
-        const top = results[0];
-        const topStyle = getLineStyle(top.name);
-        document.getElementById('main-station-name').innerText = top.name;
-        document.getElementById('main-station-addr').innerText = top.vicinity;
-        document.getElementById('main-type-tag').innerText = topStyle.type;
-        document.getElementById('main-type-tag').className = `text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded mr-2 ${topStyle.type === 'Metrô' ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'}`;
-        document.getElementById('main-btn-route').href = `https://www.google.com/maps/dir/?api=1&destination=${top.geometry.location.lat()},${top.geometry.location.lng()}`;
-
-        // 2. Lista e Marcadores
-        const listContainer = document.getElementById('list-container');
-        listContainer.innerHTML = "";
-
-        results.forEach((place, index) => {
-            const style = getLineStyle(place.name);
+        places.forEach((place, i) => {
+            const info = getStyle(place.name);
             
-            // Marker no mapa
+            // Marker Colorido
             const marker = new google.maps.Marker({
                 position: place.geometry.location,
                 map: map,
-                icon: `http://maps.google.com/mapfiles/ms/icons/${style.color}-dot.png`
+                title: place.name,
+                icon: `https://maps.google.com/mapfiles/ms/icons/${info.color}-dot.png`
             });
             markers.push(marker);
 
-            marker.addListener("click", () => {
-                infoWindow.setContent(`<div style="color:#000; padding:5px"><b>${place.name}</b><br><small>${style.type}</small></div>`);
-                infoWindow.open(map, marker);
-            });
-
-            // Adicionar na lista se não for a primeira (para não repetir o destaque)
-            if (index > 0 && index < 7) {
+            if (i === 0) { // Destaque
+                document.getElementById('main-name').innerText = place.name;
+                document.getElementById('main-addr').innerText = place.vicinity;
+                document.getElementById('main-type').innerText = info.label;
+                document.getElementById('main-type').style.backgroundColor = info.hex;
+                document.getElementById('main-link').href = `https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}`;
+            } else if (i < 6) { // Lista
                 const item = document.createElement('div');
-                item.className = "flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-100";
+                item.className = "flex items-center justify-between p-3 bg-gray-50 rounded-xl border-l-4";
+                item.style.borderLeftColor = info.hex;
                 item.innerHTML = `
-                    <div class="flex items-center space-x-3">
-                        <div class="w-1.5 h-8 rounded-full" style="background-color: ${style.hex}"></div>
-                        <div>
-                            <p class="text-[10px] font-bold text-gray-400 uppercase">${style.type}</p>
-                            <p class="text-sm font-bold text-gray-800 leading-tight">${place.name}</p>
-                        </div>
+                    <div class="flex-1 px-2">
+                        <span class="text-[8px] font-black uppercase text-gray-400">${info.label}</span>
+                        <h4 class="text-sm font-bold text-gray-800 truncate">${place.name}</h4>
                     </div>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-white p-2 rounded-lg shadow-sm border border-gray-100">
-                        <i class="fas fa-location-arrow text-blue-600 text-xs"></i>
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="text-blue-600 p-2">
+                        <i class="fas fa-directions"></i>
                     </a>
                 `;
-                listContainer.appendChild(item);
+                list.appendChild(item);
             }
         });
     }
