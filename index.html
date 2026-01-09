@@ -3,186 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabela Clara - Tem Metrô Lá?</title>
+    <title>Estação Fácil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { display: flex; justify-content: center; background-color: #f3f4f6; margin: 0; font-family: sans-serif; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; background: white; overflow: hidden; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; height: 100%; }
-        .bottom-sheet { max-height: 50%; overflow-y: auto; border-radius: 24px 24px 0 0; position: relative; background: white; }
+        #map { flex-grow: 1; width: 100%; }
+        .bottom-sheet { max-height: 55%; background: white; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 40; padding: 20px; overflow-y: auto; }
+        
+        /* Efeito Hover com Brilho */
+        .glow-button {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .glow-button:hover {
+            box-shadow: 0 0 15px rgba(37, 99, 235, 0.6);
+            transform: translateY(-1px);
+            filter: brightness(1.1);
+        }
+
+        .line-badge { font-size: 9px; padding: 2px 8px; border-radius: 99px; color: white; font-weight: 800; text-transform: uppercase; }
+        .hidden-list { display: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-800/80 to-transparent pt-6 pb-12 px-6 pointer-events-none">
-        <h1 class="text-white text-2xl font-black tracking-tighter drop-shadow-md italic">TEM METRÔ LÁ <span class="text-blue-300">?</span></h1>
-        <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest opacity-90">Tabela Clara v3.0</p>
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900/90 to-transparent pt-6 pb-12 px-6 pointer-events-none">
+        <h1 class="text-white text-3xl font-black tracking-tighter drop-shadow-lg">ESTAÇÃO FÁCIL</h1>
+        <p class="text-blue-100 text-[10px] font-medium leading-none mt-1">Encontre a Estação de Trem ou Metrô mais próxima de você</p>
     </div>
 
-    <div class="absolute top-24 left-0 right-0 z-50 px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-2 flex items-center space-x-3 border border-gray-100">
-            <i class="fas fa-search text-gray-400 ml-2"></i>
-            <input type="text" id="pac-input" placeholder="Digite o endereço aqui..." class="w-full outline-none text-sm text-gray-700 bg-transparent py-2">
-            <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 shadow-md">PESQUISAR</button>
+    <div class="absolute top-28 left-0 right-0 z-50 px-4">
+        <div class="bg-white rounded-2xl shadow-2xl p-2 flex items-center space-x-2 border border-gray-100">
+            <input type="text" id="pac-input" placeholder="Para onde você vai?" class="w-full outline-none text-sm px-3 py-2">
+            <button id="search-btn" class="glow-button bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider">Buscar</button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-sheet shadow-[0_-10px_40px_rgba(0,0,0,0.2)] z-40 px-6 pt-2 pb-8 no-scrollbar">
-        <div class="flex justify-center p-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
+    <div class="bottom-sheet no-scrollbar">
+        <div class="flex justify-center mb-4"><div class="w-12 h-1.5 bg-gray-200 rounded-full"></div></div>
         
-        <div id="main-card" class="mb-6">
-            <div class="flex items-center space-x-2 mb-1">
-                <span id="main-tag" class="text-[9px] font-black px-2 py-0.5 rounded text-white bg-blue-600 uppercase italic">AGUARDANDO</span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Mais próxima</span>
-            </div>
-            <h2 id="main-station-name" class="text-xl font-extrabold text-gray-800 uppercase leading-tight">LOCALIZANDO...</h2>
+        <div id="main-station-content">
+            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Estação mais próxima</span>
+            <h2 id="st-name" class="text-2xl font-black text-gray-800 uppercase leading-none mt-1">Localizando...</h2>
             
-            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-3 flex justify-between items-center">
-                <div class="flex-1 overflow-hidden">
-                    <p id="main-station-addr" class="text-sm font-semibold text-gray-600 truncate italic">Use a busca acima ou ligue o GPS</p>
-                    <p class="text-[10px] text-green-600 font-bold mt-1 tracking-widest uppercase">● ESTAÇÃO ABERTA</p>
+            <div class="flex items-center space-x-3 mt-3 mb-5">
+                <span id="st-line" class="line-badge bg-gray-400">---</span>
+                <span id="st-status" class="text-[10px] font-bold px-2 py-1 rounded bg-gray-100 text-gray-400 uppercase italic">Verificando...</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-5">
+                <div class="bg-blue-50/50 p-3 rounded-2xl border border-blue-100">
+                    <p class="text-[9px] text-blue-400 font-black uppercase">Distância</p>
+                    <p class="text-md font-black text-blue-700"><span id="st-dist">--</span> km</p>
+                </div>
+                <div class="bg-green-50/50 p-3 rounded-2xl border border-green-100">
+                    <p class="text-[9px] text-green-400 font-black uppercase">Tarifa</p>
+                    <p class="text-md font-black text-green-700">R$ 5,40</p>
                 </div>
             </div>
             
-            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-4 bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 text-sm shadow-lg">
-                <i class="fas fa-location-arrow"></i> <span>COMO CHEGAR LÁ</span>
+            <a id="st-link" href="#" target="_blank" class="glow-button block w-full bg-blue-600 text-white text-center py-4 rounded-2xl font-black shadow-lg shadow-blue-200 uppercase text-sm">
+                <i class="fas fa-directions mr-2"></i>Como Chegar Lá
             </a>
         </div>
 
-        <h3 class="text-[11px] font-bold text-gray-400 uppercase mb-3 tracking-tighter border-b pb-2">Estações e Trens nos arredores</h3>
-        <div id="list-container" class="space-y-3">
-            <p class="text-xs text-gray-400 italic py-4">Resultados aparecerão aqui...</p>
+        <div class="mt-6">
+            <button onclick="toggleList()" class="w-full flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-200">
+                <span class="text-[10px] font-black text-gray-500 uppercase">Outras Estações Próximas</span>
+                <i id="list-icon" class="fas fa-plus text-gray-400"></i>
+            </button>
+            <div id="nearby-list" class="hidden-list mt-3 space-y-3 pb-4"></div>
         </div>
     </div>
 </div>
 
 <script>
-    let map, service, markers = [];
-    const apiKey = "AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU";
-
-    function getStationStyle(name) {
-        const n = name.toLowerCase();
-        if (n.includes('azul')) return { color: 'blue', hex: '#005596', type: 'METRÔ' };
-        if (n.includes('verde')) return { color: 'green', hex: '#007e5e', type: 'METRÔ' };
-        if (n.includes('vermelha')) return { color: 'red', hex: '#ee3135', type: 'METRÔ' };
-        if (n.includes('amarela')) return { color: 'yellow', hex: '#f0ad4e', type: 'METRÔ' };
-        if (n.includes('lilás') || n.includes('lilas')) return { color: 'purple', hex: '#93278f', type: 'METRÔ' };
-        if (n.includes('prata')) return { color: 'gray', hex: '#9e9f9f', type: 'METRÔ' };
-        return { color: 'orange', hex: '#f6821f', type: 'TREM' };
-    }
+    let map, service, infoWindow, markers = [], heatCircles = [];
+    
+    const stationsData = [
+        { nome: 'Consolação', linha: 'Linha 2-Verde', lat: -23.5587, lng: -46.6611, cor: '#007e5e' },
+        { nome: 'Paulista', linha: 'Linha 4-Amarela', lat: -23.5552, lng: -46.6622, cor: '#fff000' },
+        { nome: 'Trianon-Masp', linha: 'Linha 2-Verde', lat: -23.5641, lng: -46.6549, cor: '#007e5e' },
+        { nome: 'Higienópolis-Mackenzie', linha: 'Linha 4-Amarela', lat: -23.5488, lng: -46.6511, cor: '#fff000' },
+        { nome: 'República', linha: 'Linha 3-Vermelha', lat: -23.5441, lng: -46.6425, cor: '#ee3135' },
+        { nome: 'Luz', linha: 'Linha 1-Azul', lat: -23.5365, lng: -46.6341, cor: '#005596' }
+    ];
 
     function initMap() {
         const sp = { lat: -23.5505, lng: -46.6333 };
         map = new google.maps.Map(document.getElementById("map"), {
-            center: sp, zoom: 14, disableDefaultUI: true
+            center: sp, zoom: 15, disableDefaultUI: true,
+            styles: [{ featureType: "poi.business", elementType: "labels", stylers: [{ visibility: "off" }] }]
         });
 
-        service = new google.maps.PlacesService(map);
+        infoWindow = new google.maps.InfoWindow();
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
 
-        // FUNÇÃO DE BUSCA CORRIGIDA
-        const startSearch = () => {
+        document.getElementById("search-btn").onclick = () => {
             const place = autocomplete.getPlace();
             if (place && place.geometry) {
-                map.setCenter(place.geometry.location);
-                map.setZoom(15);
-                findStations(place.geometry.location);
-            } else {
-                // Busca por texto caso não selecione a sugestão
-                const geocoder = new google.maps.Geocoder();
-                geocoder.geocode({ address: input.value }, (results, status) => {
-                    if (status === 'OK') {
-                        map.setCenter(results[0].geometry.location);
-                        findStations(results[0].geometry.location);
-                    }
-                });
+                updatePosition(place.geometry.location);
             }
         };
 
-        document.getElementById("search-btn").onclick = startSearch;
-
-        // GPS
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((pos) => {
-                const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                map.setCenter(p);
-                findStations(p);
+            navigator.geolocation.getCurrentPosition(p => {
+                const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                updatePosition(pos);
             });
         }
     }
 
-    function findStations(location) {
-        const request = {
-            location: location,
-            radius: '5000',
-            types: ['subway_station', 'train_station', 'transit_station']
-        };
+    function updatePosition(location) {
+        map.setCenter(location);
+        
+        // Limpar elementos antigos
+        markers.forEach(m => m.setMap(null));
+        heatCircles.forEach(c => c.setMap(null));
+        markers = [];
+        heatCircles = [];
 
-        service.nearbySearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const stations = results.filter(r => 
-                    r.name.toLowerCase().includes('estação') || 
-                    r.name.toLowerCase().includes('metrô') ||
-                    r.name.toLowerCase().includes('cptm')
-                );
-                updateUI(stations);
+        // Boneco Pegman do Usuário
+        new google.maps.Marker({
+            position: location,
+            map: map,
+            icon: { url: 'https://maps.google.com/mapfiles/kml/pal4/icon62.png', scaledSize: new google.maps.Size(40, 40) }
+        });
+
+        // Mapa de calor (Círculos de distância)
+        heatCircles.push(new google.maps.Circle({
+            strokeColor: "#22c55e", strokeOpacity: 0.6, strokeWeight: 2,
+            fillColor: "#22c55e", fillOpacity: 0.1, map: map, center: location, radius: 1000
+        }));
+        heatCircles.push(new google.maps.Circle({
+            strokeColor: "#ef4444", strokeOpacity: 0.3, strokeWeight: 2,
+            fillColor: "#ef4444", fillOpacity: 0.05, map: map, center: location, radius: 3000
+        }));
+
+        processStations(location);
+    }
+
+    function processStations(userLoc) {
+        const sorted = stationsData.map(s => {
+            const dist = google.maps.geometry.spherical.computeDistanceBetween(userLoc, new google.maps.LatLng(s.lat, s.lng));
+            return { ...s, distance: dist / 1000 };
+        }).sort((a, b) => a.distance - b.distance);
+
+        // Principal
+        const main = sorted[0];
+        document.getElementById('st-name').innerText = main.nome;
+        document.getElementById('st-dist').innerText = main.distance.toFixed(1);
+        document.getElementById('st-line').innerText = main.linha;
+        document.getElementById('st-line').style.backgroundColor = main.cor;
+        document.getElementById('st-link').href = `https://www.google.com/maps/dir/?api=1&destination=${main.lat},${main.lng}`;
+        
+        // Status Horário
+        const hr = new Date().getHours();
+        const isOpen = hr >= 5 && hr < 24;
+        const statusEl = document.getElementById('st-status');
+        statusEl.innerText = isOpen ? "● Aberta agora" : "○ Fechada agora";
+        statusEl.className = isOpen ? "text-[10px] font-bold px-2 py-1 rounded bg-green-100 text-green-600 uppercase" : "text-[10px] font-bold px-2 py-1 rounded bg-red-100 text-red-600 uppercase";
+
+        // Criar Pins para todas no raio de 5km
+        const list = document.getElementById('nearby-list');
+        list.innerHTML = "";
+        
+        sorted.forEach((s, i) => {
+            if (s.distance <= 5) {
+                const marker = new google.maps.Marker({
+                    position: { lat: s.lat, lng: s.lng },
+                    map: map,
+                    title: s.nome,
+                    icon: {
+                        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+                        fillColor: s.cor, fillOpacity: 1, strokeWeight: 2, strokeColor: "#fff", scale: 8
+                    }
+                });
+
+                marker.addListener("click", () => {
+                    infoWindow.setContent(`<div style="padding:10px"><b style="color:${s.cor}">${s.nome}</b><br><small>${s.linha}</small></div>`);
+                    infoWindow.open(map, marker);
+                });
+                markers.push(marker);
+
+                if (i > 0) {
+                    const item = document.createElement('div');
+                    item.className = "flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl shadow-sm";
+                    item.innerHTML = `<div><p class="text-sm font-bold">${s.nome}</p><p class="text-[9px] text-gray-400 font-bold uppercase">${s.linha} • ${s.distance.toFixed(1)}km</p></div><span class="text-xs font-black text-green-600">R$ 5,40</span>`;
+                    list.appendChild(item);
+                }
             }
         });
     }
 
-    function updateUI(results) {
-        if (results.length === 0) return;
-        
-        // Limpa tudo
-        markers.forEach(m => m.setMap(null));
-        markers = [];
-        const container = document.getElementById('list-container');
-        container.innerHTML = "";
-
-        // Card Principal
-        const top = results[0];
-        const styleTop = getStationStyle(top.name);
-        document.getElementById('main-station-name').innerText = top.name;
-        document.getElementById('main-station-addr').innerText = top.vicinity;
-        document.getElementById('main-tag').innerText = styleTop.type;
-        document.getElementById('main-tag').style.backgroundColor = styleTop.hex;
-        document.getElementById('main-btn-route').href = `https://www.google.com/maps/dir/?api=1&destination=${top.geometry.location.lat()},${top.geometry.location.lng()}`;
-
-        // Lista e Pins
-        results.forEach((place, i) => {
-            const style = getStationStyle(place.name);
-            const marker = new google.maps.Marker({
-                position: place.geometry.location,
-                map: map,
-                icon: `http://maps.google.com/mapfiles/ms/icons/${style.color}-dot.png`
-            });
-            markers.push(marker);
-
-            if (i > 0 && i < 10) {
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-4 bg-gray-50 border-l-4 rounded-xl shadow-sm";
-                div.style.borderLeftColor = style.hex;
-                div.innerHTML = `
-                    <div class="flex-1 overflow-hidden pr-2">
-                        <p class="text-[8px] font-black text-gray-400 uppercase">[ ${style.type} ]</p>
-                        <h4 class="text-sm font-bold text-gray-800 truncate">${place.name}</h4>
-                    </div>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-white p-2 rounded-lg border border-gray-100">
-                         <i class="fas fa-directions text-blue-600 text-xs"></i>
-                    </a>`;
-                container.appendChild(div);
-            }
-        });
+    function toggleList() {
+        const list = document.getElementById('nearby-list');
+        const icon = document.getElementById('list-icon');
+        list.classList.toggle('hidden-list');
+        icon.className = list.classList.contains('hidden-list') ? 'fas fa-plus' : 'fas fa-minus';
     }
 </script>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU&libraries=places&callback=initMap" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU&libraries=places,geometry&callback=initMap" async defer></script>
 
 </body>
 </html>
