@@ -3,35 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabela Clara - Estação Fácil</title>
+    <title>Estação Fácil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; overflow: hidden; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; }
-        .bottom-sheet { max-height: 50%; background: white; border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 40; padding: 20px; overflow-y: auto; }
-        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
-        .hidden-list { display: none; }
-        .rotate-180 { transform: rotate(180deg); }
+        #map { flex-grow: 1; width: 100%; height: 100%; }
+        
+        /* Cabeçalho conforme imagem 1 */
+        .header-bg { position: absolute; top: 0; left: 0; right: 0; z-index: 30; background: linear-gradient(180deg, #1e40af 0%, rgba(30, 64, 175, 0) 100%); padding: 30px 20px 60px; pointer-events: none; }
+        
+        /* Barra de Busca conforme referência */
+        .search-box { position: absolute; top: 110px; left: 15px; right: 15px; z-index: 50; }
+        
+        /* Painel Inferior (Bottom Sheet) */
+        .bottom-sheet { background: white; border-radius: 24px 24px 0 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.05); z-index: 40; padding: 20px; position: relative; }
+        
+        /* Card Principal Estilo Imagem 1 */
+        .main-card { background: #F9FAFB; border-radius: 16px; padding: 16px; margin-top: 10px; border: 1px solid #F1F5F9; }
+        
+        /* Botão com Brilho */
+        .btn-blue { background-color: #2563eb; color: white; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+        .btn-blue:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4); }
+        
+        .line-dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 10px; flex-shrink: 0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        .station-card { cursor: pointer; transition: background 0.2s; }
-        .station-card:hover { background-color: #f9fafb; }
+        .rotate-180 { transform: rotate(180deg); }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900/80 to-transparent pt-8 pb-16 px-6 pointer-events-none">
-        <h1 class="text-white text-3xl font-black tracking-tighter italic">TEM METRÔ LÁ?</h1>
-        <p class="text-blue-100 text-[10px] font-medium opacity-80">Tabela Clara v3.0 - Pesquise e Navegue</p>
+    <div class="header-bg text-center">
+        <h1 class="text-white text-3xl font-black italic tracking-tighter">ESTAÇÃO FÁCIL</h1>
+        <p class="text-blue-100 text-[11px] font-medium">Encontre a Estação de Trem ou Metrô mais próxima de você</p>
     </div>
 
-    <div class="absolute top-28 left-0 right-0 z-50 px-4">
-        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center space-x-2 border border-gray-100">
+    <div class="search-box">
+        <div class="bg-white rounded-full shadow-xl p-1.5 flex items-center border border-gray-100">
             <div class="pl-4 text-gray-400"><i class="fas fa-search"></i></div>
-            <input type="text" id="pac-input" placeholder="Rua Augusta - Consolação, São Paulo" class="w-full outline-none text-sm py-2">
-            <button id="search-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-colors">Pesquisar</button>
+            <input type="text" id="pac-input" placeholder="Para onde você vai?" class="w-full outline-none text-sm px-3">
+            <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
         </div>
     </div>
 
@@ -40,180 +53,149 @@
     <div class="bottom-sheet no-scrollbar">
         <div class="flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="selected-station-info">
+        <div>
             <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="st-name" class="text-2xl font-black text-gray-800 uppercase mt-1">Aguardando...</h2>
+            <h2 id="st-name" class="text-2xl font-black text-gray-800 uppercase leading-none mt-1 italic">AGUARDANDO...</h2>
             
-            <div class="bg-gray-50 rounded-2xl p-4 mt-4 mb-6 flex justify-between items-center border border-gray-100">
+            <div class="main-card flex justify-between items-center">
                 <div>
-                    <p id="st-instruction" class="text-sm font-bold text-gray-700">Pesquise acima ou use o GPS</p>
-                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Sinalização via Tabela Clara</p>
+                    <p id="st-desc" class="text-sm font-bold text-gray-700">Pesquise ou use o GPS</p>
+                    <p class="text-[9px] text-gray-400 font-bold uppercase mt-0.5">Sinalização via GPS</p>
                 </div>
-                <span id="st-status-badge" class="bg-green-100 text-green-700 text-[10px] font-black px-3 py-1 rounded-md hidden">ABERTA</span>
+                <span id="st-status" class="bg-green-100 text-green-700 text-[10px] font-black px-2 py-1 rounded hidden">ABERTA</span>
             </div>
             
-            <button id="btn-navigate" class="w-full bg-blue-600 text-white flex items-center justify-center py-4 rounded-2xl font-black shadow-lg uppercase text-sm space-x-2 hover:bg-blue-700">
+            <button id="btn-navigate" class="btn-blue w-full flex items-center justify-center py-4 rounded-2xl font-black mt-5 space-x-2 text-sm uppercase tracking-wider">
                 <i class="fas fa-directions text-lg"></i>
                 <span>Como Chegar Lá</span>
             </button>
         </div>
 
-        <div class="mt-8 border-t border-gray-100 pt-6">
+        <div class="mt-8 border-t border-gray-50 pt-5">
             <button onclick="toggleList()" class="w-full flex justify-between items-center mb-4">
                 <span class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Estações e Trens Próximos</span>
-                <i id="list-icon" class="fas fa-chevron-down text-gray-300 transition-transform"></i>
+                <i id="list-icon" class="fas fa-chevron-up text-gray-300 transition-transform"></i>
             </button>
-            <div id="nearby-list" class="space-y-3 pb-8">
+            <div id="nearby-list" class="space-y-3 pb-6">
                 </div>
         </div>
     </div>
 </div>
 
 <script>
-    let map, userPos, markers = [], polyline, selectedStation;
-    
-    // Base de dados conforme referências de cores
+    let map, userMarker, markers = [], polyline, userPos;
+
     const stationsData = [
-        { id: 1, nome: 'Consolação', linha: 'Linha 2-Verde', lat: -23.5587, lng: -46.6611, cor: '#007e5e' },
-        { id: 2, nome: 'Paulista', linha: 'Linha 4-Amarela', lat: -23.5552, lng: -46.6622, cor: '#fff000' },
-        { id: 3, nome: 'República', linha: 'Linha 3-Vermelha', lat: -23.5441, lng: -46.6425, cor: '#ee3135' },
-        { id: 4, nome: 'Brás', linha: 'Linha 3-Vermelha', lat: -23.5482, lng: -46.6165, cor: '#ee3135' },
-        { id: 5, nome: 'Luz', linha: 'Linha 1-Azul', lat: -23.5365, lng: -46.6341, cor: '#005596' }
+        { nome: 'Palmeiras-Barra Funda', linha: 'Linha 3-Vermelha', lat: -23.5252, lng: -46.6669, cor: '#ee3135' },
+        { nome: 'Santa Cecília', linha: 'Linha 3-Vermelha', lat: -23.5393, lng: -46.6489, cor: '#ee3135' },
+        { nome: 'República', linha: 'Linha 4-Amarela', lat: -23.5441, lng: -46.6425, cor: '#fff000' },
+        { nome: 'Luz', linha: 'Linha 1-Azul', lat: -23.5365, lng: -46.6341, cor: '#005596' },
+        { nome: 'Brás', linha: 'Linha 11-Coral', lat: -23.5482, lng: -46.6165, cor: '#f47920' }
     ];
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: -23.5505, lng: -46.6333 }, 
-            zoom: 15, 
-            disableDefaultUI: true,
-            styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
+            center: { lat: -23.5505, lng: -46.6333 },
+            zoom: 15,
+            disableDefaultUI: true
         });
 
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
 
-        // Correção do botão de pesquisa
-        document.getElementById("search-btn").addEventListener('click', () => {
+        document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) {
-                updateUserPosition(place.geometry.location);
-            } else {
-                // Se o usuário apenas digitou e clicou sem selecionar o autocomplete
-                const service = new google.maps.places.PlacesService(map);
-                service.findPlaceFromQuery({query: input.value, fields: ['geometry']}, (results, status) => {
-                    if (status === google.maps.places.PlacesServiceStatus.OK) {
-                        updateUserPosition(results[0].geometry.location);
-                    }
-                });
-            }
+            if (place && place.geometry) updatePosition(place.geometry.location);
         });
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(p => {
-                userPos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
-                updateUserPosition(userPos);
+                const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                updatePosition(pos);
             });
         }
     }
 
-    function updateUserPosition(location) {
+    function updatePosition(location) {
         userPos = location;
         map.setCenter(location);
-        clearMarkers();
+        if(userMarker) userMarker.setMap(null);
 
-        // Boneco Pegman (conforme imagem em anexo)
-        new google.maps.Marker({
+        userMarker = new google.maps.Marker({
             position: location,
             map: map,
             icon: {
                 url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69616fc0d10a212f979c7ace/e0aceee08_png-transparent-google-street-view-street-view-trusted-google-maps-pegman-look-photography-logo-immersive-video-thumbnail1.png',
-                scaledSize: new google.maps.Size(40, 40),
-                anchor: new google.maps.Point(20, 40)
+                scaledSize: new google.maps.Size(42, 42),
+                anchor: new google.maps.Point(21, 42)
             }
         });
 
         const sorted = stationsData.map(s => {
-            const dist = google.maps.geometry.spherical.computeDistanceBetween(location, new google.maps.LatLng(s.lat, s.lng));
-            return { ...s, distance: dist / 1000 };
-        }).sort((a, b) => a.distance - b.distance);
+            const d = google.maps.geometry.spherical.computeDistanceBetween(location, new google.maps.LatLng(s.lat, s.lng));
+            return { ...s, dist: d / 1000 };
+        }).sort((a, b) => a.dist - b.dist);
 
-        renderStations(sorted);
-        selectStation(sorted[0]); // Seleciona a mais próxima por padrão
+        renderUI(sorted);
+        selectStation(sorted[0]);
     }
 
-    function renderStations(stations) {
+    function renderUI(stations) {
         const list = document.getElementById('nearby-list');
         list.innerHTML = "";
-        
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+
         stations.forEach(s => {
-            // Pin clássico no mapa para todas as estações próximas
             const marker = new google.maps.Marker({
                 position: { lat: s.lat, lng: s.lng },
                 map: map,
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: s.cor, fillOpacity: 1, strokeWeight: 2, strokeColor: "#FFFFFF", scale: 6
-                }
+                icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: s.cor, fillOpacity: 1, strokeColor: '#FFF', strokeWeight: 2, scale: 6 }
             });
             markers.push(marker);
 
-            // Card da Lista com a bolinha da cor da linha
-            const item = document.createElement('div');
-            item.className = "station-card flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl shadow-sm";
-            item.onclick = () => selectStation(s);
-            item.innerHTML = `
+            const card = document.createElement('div');
+            card.className = "flex justify-between items-center p-4 bg-white border border-gray-100 rounded-xl shadow-sm cursor-pointer hover:bg-gray-50";
+            card.onclick = () => selectStation(s);
+            card.innerHTML = `
                 <div class="flex items-center">
                     <span class="line-dot" style="background-color: ${s.cor}"></span>
                     <div>
                         <p class="text-sm font-black text-gray-800 uppercase">${s.nome}</p>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase">${s.distance.toFixed(1)} km • ${s.linha}</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">${s.dist.toFixed(1)} km • ${s.linha}</p>
                     </div>
                 </div>
                 <i class="fas fa-chevron-right text-gray-200 text-xs"></i>
             `;
-            list.appendChild(item);
+            list.appendChild(card);
         });
     }
 
-    function selectStation(station) {
-        selectedStation = station;
-        document.getElementById('st-name').innerText = station.nome;
-        document.getElementById('st-instruction').innerText = `${station.linha} • ${station.distance.toFixed(1)} km de distância`;
-        document.getElementById('st-status-badge').classList.remove('hidden');
+    function selectStation(s) {
+        document.getElementById('st-name').innerText = s.nome;
+        document.getElementById('st-desc').innerText = `${s.dist.toFixed(1)} km • ${s.linha}`;
+        document.getElementById('st-status').classList.remove('hidden');
         
-        // Centraliza o mapa e desenha o pontilhado (Visão Macro)
-        map.panTo({ lat: station.lat, lng: station.lng });
-        drawDashedLine(userPos, { lat: station.lat, lng: station.lng });
+        map.panTo({ lat: s.lat, lng: s.lng });
 
-        // Ação do Botão "Como Chegar Lá"
-        document.getElementById('btn-navigate').onclick = () => {
-            const url = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}&travelmode=walking`;
-            window.open(url, '_blank');
-        };
-    }
-
-    function drawDashedLine(from, to) {
-        if (polyline) polyline.setMap(null);
-        
-        const lineSymbol = { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3 };
+        // Rota pontilhada
+        if(polyline) polyline.setMap(null);
         polyline = new google.maps.Polyline({
-            path: [from, to],
-            strokeColor: "#3b82f6",
-            strokeOpacity: 0,
-            icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" }],
+            path: [userPos, { lat: s.lat, lng: s.lng }],
+            strokeColor: "#2563EB", strokeOpacity: 0,
+            icons: [{ icon: {path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2}, offset: '0', repeat: '15px' }],
             map: map
         });
-    }
 
-    function clearMarkers() {
-        markers.forEach(m => m.setMap(null));
-        markers = [];
+        document.getElementById('btn-navigate').onclick = () => {
+            window.open(`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=walking`, '_blank');
+        };
     }
 
     function toggleList() {
         const list = document.getElementById('nearby-list');
         const icon = document.getElementById('list-icon');
-        list.classList.toggle('hidden-list');
+        list.classList.toggle('hidden');
         icon.classList.toggle('rotate-180');
     }
 </script>
