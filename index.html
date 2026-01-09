@@ -10,8 +10,8 @@
         body { display: flex; justify-content: center; background-color: #f3f4f6; margin: 0; font-family: sans-serif; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; background: white; overflow: hidden; display: flex; flex-direction: column; }
         #map { flex-grow: 1; width: 100%; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
         .bottom-sheet { max-height: 50%; overflow-y: auto; border-radius: 24px 24px 0 0; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body>
@@ -19,13 +19,13 @@
 <div class="app-container">
     <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-700 to-transparent pt-6 pb-12 px-6 pointer-events-none">
         <h1 class="text-white text-2xl font-black tracking-tighter drop-shadow-md">TEM METRÔ LÁ <span class="text-blue-300">?</span></h1>
-        <p class="text-blue-100 text-xs font-medium opacity-90">Encontre a estação mais próxima agora</p>
+        <p class="text-blue-100 text-xs font-medium opacity-90">Tabela Clara v3.0 - Pesquise e Navegue</p>
     </div>
 
     <div class="absolute top-24 left-0 right-0 z-20 px-4">
         <div class="bg-white rounded-2xl shadow-xl p-2 flex items-center space-x-3 border border-gray-100">
             <i class="fas fa-search text-gray-400 ml-2"></i>
-            <input type="text" id="pac-input" placeholder="Buscar outro endereço..." class="w-full outline-none text-sm text-gray-700 bg-transparent">
+            <input type="text" id="pac-input" placeholder="Digite o endereço..." class="w-full outline-none text-sm text-gray-700 bg-transparent">
             <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">PESQUISAR</button>
         </div>
     </div>
@@ -37,84 +37,81 @@
         
         <div id="main-card" class="mb-6">
             <span class="text-[10px] font-bold uppercase tracking-widest text-blue-600">Mais próxima de você</span>
-            <h2 id="main-station-name" class="text-xl font-extrabold text-gray-800 uppercase">Buscando...</h2>
+            <h2 id="main-station-name" class="text-xl font-extrabold text-gray-800 uppercase leading-tight">Aguardando...</h2>
             <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-2 flex justify-between items-center">
                 <div class="flex-1 overflow-hidden pr-2">
-                    <p id="main-station-addr" class="text-sm font-semibold text-gray-700 truncate">Aguardando localização</p>
-                    <p id="main-station-dist" class="text-xs text-gray-500">Calculando distância...</p>
+                    <p id="main-station-addr" class="text-sm font-semibold text-gray-700 truncate">Pesquise acima ou use o GPS</p>
+                    <p id="main-station-type" class="text-[10px] text-gray-400 font-bold uppercase mt-1">Sinalização via Tabela Clara</p>
                 </div>
                 <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded shrink-0">ABERTA</span>
             </div>
-            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-3 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center space-x-2 text-sm shadow-lg shadow-blue-100">
+            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-3 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center space-x-2 text-sm">
                 <i class="fas fa-directions"></i> <span>COMO CHEGAR LÁ</span>
             </a>
         </div>
 
         <hr class="border-gray-100 mb-4">
 
-        <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Outras estações nos arredores</h3>
-        <div id="list-container" class="space-y-3 pb-4">
-            </div>
+        <h3 class="text-xs font-bold text-gray-400 uppercase mb-3">Estações e Trens próximos</h3>
+        <div id="list-container" class="space-y-3 pb-4"></div>
     </div>
 </div>
 
 <script>
-    let map, service, infoWindow, userPos, markers = [];
+    let map, service, infoWindow, markers = [];
     const apiKey = "AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU";
 
-    // Mapeamento de Cores e Tipos
-    const getStationData = (name) => {
+    function getStationInfo(name) {
         const n = name.toLowerCase();
-        let color = 'orange'; // Cor padrão (Trens/Outros)
-        let type = 'TREM';
-
-        if (n.includes('azul')) { color = 'blue'; type = 'METRÔ'; }
-        else if (n.includes('verde')) { color = 'green'; type = 'METRÔ'; }
-        else if (n.includes('vermelha')) { color = 'red'; type = 'METRÔ'; }
-        else if (n.includes('amarela')) { color = 'yellow'; type = 'METRÔ'; }
-        else if (n.includes('lilás') || n.includes('lilas')) { color = 'purple'; type = 'METRÔ'; }
-        else if (n.includes('prata')) { color = 'gray'; type = 'METRÔ'; }
-        else if (n.includes('metrô') || n.includes('metro')) { type = 'METRÔ'; color = 'blue'; }
-
-        return { color, type };
-    };
+        if (n.includes('azul')) return { color: 'blue', type: 'METRÔ' };
+        if (n.includes('verde')) return { color: 'green', type: 'METRÔ' };
+        if (n.includes('vermelha')) return { color: 'red', type: 'METRÔ' };
+        if (n.includes('amarela')) return { color: 'yellow', type: 'METRÔ' };
+        if (n.includes('lilás') || n.includes('lilas')) return { color: 'purple', type: 'METRÔ' };
+        if (n.includes('prata')) return { color: 'gray', type: 'METRÔ' };
+        return { color: 'orange', type: 'TREM' };
+    }
 
     function initMap() {
-        const defaultPos = { lat: -23.5505, lng: -46.6333 };
+        const sp = { lat: -23.5505, lng: -46.6333 };
         map = new google.maps.Map(document.getElementById("map"), {
-            center: defaultPos,
-            zoom: 15,
-            disableDefaultUI: true
+            center: sp, zoom: 15, disableDefaultUI: true
         });
 
         infoWindow = new google.maps.InfoWindow();
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition((position) => {
-                userPos = { lat: position.coords.latitude, lng: position.coords.longitude };
-                map.setCenter(userPos);
-                new google.maps.Marker({
-                    position: userPos,
-                    map: map,
-                    icon: 'http://maps.google.com/mapfiles/ms/icons/man.png'
-                });
-                findStations(userPos);
-            }, () => { 
-                console.log("GPS negado, usando padrão.");
-                findStations(defaultPos);
-            });
-        }
+        service = new google.maps.places.PlacesService(map);
 
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
-        document.getElementById("search-btn").addEventListener("click", () => {
+
+        // FUNÇÃO PARA PESQUISAR
+        const performSearch = () => {
             const place = autocomplete.getPlace();
             if (place && place.geometry) {
-                userPos = place.geometry.location;
-                map.setCenter(userPos);
-                findStations(userPos);
+                map.setCenter(place.geometry.location);
+                findStations(place.geometry.location);
+            } else {
+                // Se o usuário apenas digitou e deu enter/clique sem selecionar a sugestão
+                const geocoder = new google.maps.Geocoder();
+                geocoder.geocode({ address: input.value }, (results, status) => {
+                    if (status === 'OK') {
+                        map.setCenter(results[0].geometry.location);
+                        findStations(results[0].geometry.location);
+                    }
+                });
             }
-        });
+        };
+
+        document.getElementById("search-btn").addEventListener("click", performSearch);
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition((pos) => {
+                const p = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+                map.setCenter(p);
+                new google.maps.Marker({ position: p, map: map, icon: 'http://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' });
+                findStations(p);
+            });
+        }
     }
 
     function findStations(location) {
@@ -124,70 +121,54 @@
             types: ['subway_station', 'train_station', 'transit_station']
         };
 
-        service = new google.maps.places.PlacesService(map);
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                // Filtra para garantir que são estações de trilhos
-                const filtered = results.filter(r => 
-                    r.name.toLowerCase().includes('estação') || 
-                    r.name.toLowerCase().includes('metrô') ||
-                    r.name.toLowerCase().includes('trem') ||
-                    r.name.toLowerCase().includes('cptm')
+                const stations = results.filter(r => 
+                    r.name.toLowerCase().includes('estação') || r.name.toLowerCase().includes('metrô')
                 );
-                updateUI(filtered);
+                updateUI(stations);
             }
         });
     }
 
     function updateUI(results) {
         if (results.length === 0) return;
-
-        // Limpa pins antigos
         markers.forEach(m => m.setMap(null));
         markers = [];
 
-        // 1. Destaque (Mais Próxima)
+        // Top
         const top = results[0];
+        const infoTop = getStationInfo(top.name);
         document.getElementById('main-station-name').innerText = top.name;
         document.getElementById('main-station-addr').innerText = top.vicinity;
-        document.getElementById('main-station-dist').innerText = "Estação de trilhos mais próxima";
+        document.getElementById('main-station-type').innerText = `[ ${infoTop.type} ] - Via Tabela Clara`;
         document.getElementById('main-btn-route').href = `https://www.google.com/maps/dir/?api=1&destination=${top.geometry.location.lat()},${top.geometry.location.lng()}`;
 
-        // 2. Lista de Outras
-        const listContainer = document.getElementById('list-container');
-        listContainer.innerHTML = "";
+        const container = document.getElementById('list-container');
+        container.innerHTML = "";
 
-        results.forEach((place, index) => {
-            const data = getStationData(place.name);
-
-            // Criar Marcadores Coloridos
+        results.forEach((place, i) => {
+            const info = getStationInfo(place.name);
             const marker = new google.maps.Marker({
                 position: place.geometry.location,
                 map: map,
-                title: place.name,
-                icon: `http://maps.google.com/mapfiles/ms/icons/${data.color}-dot.png`
+                icon: `http://maps.google.com/mapfiles/ms/icons/${info.color}-dot.png`,
+                title: place.name
             });
             markers.push(marker);
 
-            marker.addListener("click", () => {
-                infoWindow.setContent(`<div style="color:#000"><b>${place.name}</b><br><span style="font-size:10px">${data.type}</span></div>`);
-                infoWindow.open(map, marker);
-            });
-
-            // Adiciona na lista (pula a primeira que já está no card principal)
-            if (index > 0 && index < 8) {
+            if (i > 0 && i < 8) {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-3 bg-gray-50 border border-gray-100 rounded-xl shadow-sm";
                 div.innerHTML = `
                     <div class="flex-1 overflow-hidden pr-2">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">[ ${data.type} ]</p>
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">[ ${info.type} ]</p>
                         <p class="text-sm font-bold text-gray-800 truncate">${place.name}</p>
                     </div>
                     <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-blue-50 p-2 rounded-lg">
                          <i class="fas fa-location-arrow text-blue-600 text-xs"></i>
-                    </a>
-                `;
-                listContainer.appendChild(div);
+                    </a>`;
+                container.appendChild(div);
             }
         });
     }
