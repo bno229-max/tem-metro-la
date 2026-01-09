@@ -17,15 +17,15 @@
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-800 to-transparent pt-6 pb-12 px-6 pointer-events-none">
-        <h1 class="text-white text-2xl font-black tracking-tighter drop-shadow-md italic">TEM METRÔ LÁ?</h1>
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900 to-transparent pt-6 pb-12 px-6 pointer-events-none">
+        <h1 class="text-white text-2xl font-black tracking-tighter italic shadow-sm">TEM METRÔ LÁ?</h1>
         <p class="text-blue-200 text-xs font-medium">Encontre a estação mais próxima agora</p>
     </div>
 
     <div class="absolute top-24 left-0 right-0 z-20 px-4">
         <div class="bg-white rounded-2xl shadow-xl p-2 flex items-center space-x-2 border border-gray-100">
-            <input type="text" id="pac-input" placeholder="Buscar endereço ou lugar..." class="w-full outline-none text-sm text-gray-700 px-3 py-2">
-            <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0 shadow-lg">PESQUISAR</button>
+            <input type="text" id="pac-input" placeholder="Buscar endereço..." class="w-full outline-none text-sm text-gray-700 px-3 py-2">
+            <button id="search-btn" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shrink-0">PESQUISAR</button>
         </div>
     </div>
 
@@ -34,28 +34,29 @@
     <div class="bottom-sheet px-6 pb-8 no-scrollbar">
         <div class="flex justify-center p-3"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="main-card" class="mt-2">
+        <div id="main-card">
             <div class="flex items-center space-x-2 mb-1">
-                <span id="main-label" class="text-[9px] font-black px-2 py-0.5 rounded text-white bg-blue-600 uppercase italic">METRÔ</span>
+                <span id="main-label" class="text-[9px] font-black px-2 py-0.5 rounded text-white bg-gray-400 uppercase italic">---</span>
                 <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mais Próxima</span>
             </div>
-            <h2 id="main-name" class="text-xl font-extrabold text-gray-800 uppercase leading-tight">LOCALIZANDO...</h2>
+            <h2 id="main-name" class="text-xl font-extrabold text-gray-800 uppercase leading-tight">Buscando estações...</h2>
             
             <div class="bg-gray-50 rounded-2xl p-4 border border-gray-100 mt-3 flex justify-between items-center">
                 <div class="flex-1 overflow-hidden">
-                    <p id="main-addr" class="text-sm font-semibold text-gray-700 truncate italic">Aguardando GPS ou pesquisa</p>
-                    <p id="main-status" class="text-[10px] text-green-600 font-bold mt-1 tracking-widest uppercase">● ABERTA</p>
+                    <p id="main-addr" class="text-sm font-semibold text-gray-700 truncate italic">Aguardando localização...</p>
+                    <p class="text-[10px] text-green-600 font-bold mt-1 tracking-widest uppercase">● ABERTA AGORA</p>
                 </div>
             </div>
             
-            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg shadow-blue-100 transition-all">
+            <a id="main-btn-route" href="#" target="_blank" class="w-full mt-4 bg-blue-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center space-x-2 shadow-lg transition-all active:scale-95">
                 <i class="fas fa-location-arrow"></i> <span>COMO CHEGAR LÁ</span>
             </a>
         </div>
 
-        <h3 class="text-[11px] font-bold text-gray-400 uppercase mt-8 mb-4 tracking-tighter border-b pb-2">Estações e Trens nos arredores</h3>
+        <h3 class="text-[11px] font-bold text-gray-400 uppercase mt-8 mb-4 tracking-tighter border-b pb-2">Outras estações nos arredores</h3>
         <div id="list-container" class="space-y-3">
-            </div>
+            <p class="text-xs text-gray-400 italic">Procurando trens e metrôs próximos...</p>
+        </div>
     </div>
 </div>
 
@@ -63,7 +64,6 @@
     let map, service, markers = [];
     const apiKey = "AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU";
 
-    // Cores oficiais aproximadas das linhas de SP
     const getStyle = (name) => {
         const n = name.toLowerCase();
         if (n.includes('azul')) return { hex: '#005596', color: 'blue', type: 'METRÔ' };
@@ -79,13 +79,19 @@
     };
 
     function initMap() {
+        // Inicia no centro de SP por padrão
+        const sp = { lat: -23.5505, lng: -46.6333 };
         map = new google.maps.Map(document.getElementById("map"), {
             zoom: 15,
-            center: { lat: -23.5505, lng: -46.6333 },
+            center: sp,
             disableDefaultUI: true
         });
 
-        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
+        service = new google.maps.places.PlacesService(map);
+
+        // Autocomplete
+        const input = document.getElementById("pac-input");
+        const autocomplete = new google.maps.places.Autocomplete(input);
         document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
             if (place && place.geometry) {
@@ -94,42 +100,58 @@
             }
         });
 
+        // GPS Real
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition((p) => {
                 const pos = { lat: p.coords.latitude, lng: p.coords.longitude };
                 map.setCenter(pos);
-                new google.maps.Marker({ position: pos, map: map, icon: 'http://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' });
+                new google.maps.Marker({ 
+                    position: pos, 
+                    map: map, 
+                    icon: 'https://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' 
+                });
                 searchStations(pos);
+            }, () => {
+                // Se o GPS falhar, busca na posição padrão (Centro)
+                searchStations(sp);
             });
+        } else {
+            searchStations(sp);
         }
     }
 
     function searchStations(location) {
         const request = {
             location: location,
-            radius: '3000',
+            radius: '5000', // Aumentado para 5km
             types: ['subway_station', 'train_station', 'transit_station']
         };
 
-        service = new google.maps.places.PlacesService(map);
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const filtered = results.filter(r => 
-                    r.name.toLowerCase().includes('estação') || r.name.toLowerCase().includes('metrô')
+                // Filtro para garantir que é estação
+                const stations = results.filter(r => 
+                    r.name.toLowerCase().includes('estação') || 
+                    r.name.toLowerCase().includes('metrô') ||
+                    r.name.toLowerCase().includes('cptm')
                 );
-                updateUI(filtered);
+                updateUI(stations);
             }
         });
     }
 
     function updateUI(results) {
-        if (results.length === 0) return;
+        if (results.length === 0) {
+            document.getElementById('main-name').innerText = "Nenhuma estação próxima";
+            return;
+        }
 
-        // Limpa marcadores
+        // Limpar lista e markers antigos
+        document.getElementById('list-container').innerHTML = "";
         markers.forEach(m => m.setMap(null));
         markers = [];
 
-        // 1. Principal
+        // 1. Preencher Card Principal
         const top = results[0];
         const topStyle = getStyle(top.name);
         document.getElementById('main-name').innerText = top.name;
@@ -138,34 +160,34 @@
         document.getElementById('main-label').style.backgroundColor = topStyle.hex;
         document.getElementById('main-btn-route').href = `https://www.google.com/maps/dir/?api=1&destination=${top.geometry.location.lat()},${top.geometry.location.lng()}`;
 
-        // 2. Lista e Marcadores
-        const container = document.getElementById('list-container');
-        container.innerHTML = "";
-
+        // 2. Pins e Lista
         results.forEach((place, i) => {
             const style = getStyle(place.name);
             
+            // Criar Marcador
             const marker = new google.maps.Marker({
                 position: place.geometry.location,
                 map: map,
-                icon: `http://maps.google.com/mapfiles/ms/icons/${style.color}-dot.png`
+                icon: `https://maps.google.com/mapfiles/ms/icons/${style.color}-dot.png`,
+                title: place.name
             });
             markers.push(marker);
 
-            if (i > 0 && i < 8) {
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-4 bg-gray-50 rounded-2xl border-l-4";
-                div.style.borderLeftColor = style.hex;
-                div.innerHTML = `
+            // Adicionar na lista (pula a primeira que já está no card)
+            if (i > 0 && i < 10) {
+                const item = document.createElement('div');
+                item.className = "flex justify-between items-center p-4 bg-gray-50 rounded-2xl border-l-4 shadow-sm";
+                item.style.borderLeftColor = style.hex;
+                item.innerHTML = `
                     <div class="flex-1 overflow-hidden pr-2">
                         <span class="text-[8px] font-black text-gray-400 uppercase">${style.type}</span>
                         <h4 class="text-sm font-bold text-gray-800 truncate">${place.name}</h4>
                     </div>
-                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-white p-2 rounded-lg shadow-sm">
+                    <a href="https://www.google.com/maps/dir/?api=1&destination=${place.geometry.location.lat()},${place.geometry.location.lng()}" target="_blank" class="bg-white p-2 rounded-lg border border-gray-100">
                         <i class="fas fa-directions text-blue-600 text-xs"></i>
                     </a>
                 `;
-                container.appendChild(div);
+                document.getElementById('list-container').appendChild(item);
             }
         });
     }
