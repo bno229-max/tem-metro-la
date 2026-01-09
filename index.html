@@ -3,98 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estação Fácil</title>
+    <title>Tabela Clara - Estação Fácil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; display: flex; justify-content: center; }
-        .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; background: white; overflow: hidden; display: flex; flex-direction: column; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; overflow: hidden; display: flex; flex-direction: column; }
         #map { flex-grow: 1; width: 100%; }
-        .bottom-sheet { max-height: 55%; background: white; border-radius: 24px 24px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.15); z-index: 40; padding: 20px; overflow-y: auto; }
-        
-        .glow-button {
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        .glow-button:hover {
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.5);
-            filter: brightness(1.1);
-            transform: scale(1.02);
-        }
-
-        .line-badge { font-size: 10px; padding: 3px 10px; border-radius: 99px; color: white; font-weight: 800; text-transform: uppercase; }
+        .bottom-sheet { max-height: 50%; background: white; border-radius: 28px 28px 0 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 40; padding: 20px; overflow-y: auto; }
+        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 8px; }
         .hidden-list { display: none; }
         .rotate-180 { transform: rotate(180deg); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        .station-card { cursor: pointer; transition: background 0.2s; }
+        .station-card:hover { background-color: #f9fafb; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900/90 to-transparent pt-6 pb-12 px-6 pointer-events-none">
-        <h1 class="text-white text-3xl font-black tracking-tighter drop-shadow-lg">ESTAÇÃO FÁCIL</h1>
-        <p class="text-blue-100 text-[11px] font-bold mt-1">Encontre a Estação de Trem ou Metrô mais próxima de você</p>
+    <div class="absolute top-0 left-0 right-0 z-30 bg-gradient-to-b from-blue-900/80 to-transparent pt-8 pb-16 px-6 pointer-events-none">
+        <h1 class="text-white text-3xl font-black tracking-tighter italic">TEM METRÔ LÁ?</h1>
+        <p class="text-blue-100 text-[10px] font-medium opacity-80">Tabela Clara v3.0 - Pesquise e Navegue</p>
     </div>
 
     <div class="absolute top-28 left-0 right-0 z-50 px-4">
-        <div class="bg-white rounded-2xl shadow-2xl p-2 flex items-center space-x-2 border border-gray-100">
-            <input type="text" id="pac-input" placeholder="Para onde você vai?" class="w-full outline-none text-sm px-3 py-2">
-            <button id="search-btn" class="glow-button bg-blue-600 text-white px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider">Buscar</button>
+        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center space-x-2 border border-gray-100">
+            <div class="pl-4 text-gray-400"><i class="fas fa-search"></i></div>
+            <input type="text" id="pac-input" placeholder="Rua Augusta - Consolação, São Paulo" class="w-full outline-none text-sm py-2">
+            <button id="search-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-colors">Pesquisar</button>
         </div>
     </div>
 
     <div id="map"></div>
 
     <div class="bottom-sheet no-scrollbar">
-        <div class="flex justify-center mb-4"><div class="w-12 h-1.5 bg-gray-200 rounded-full"></div></div>
+        <div class="flex justify-center mb-4"><div class="w-10 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="main-content">
-            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Estação mais próxima</span>
-            <h2 id="st-name" class="text-2xl font-black text-gray-800 uppercase leading-none mt-1">Localizando...</h2>
+        <div id="selected-station-info">
+            <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
+            <h2 id="st-name" class="text-2xl font-black text-gray-800 uppercase mt-1">Aguardando...</h2>
             
-            <div class="flex items-center space-x-3 mt-3 mb-5">
-                <span id="st-line" class="line-badge bg-gray-400">---</span>
-                <div id="st-status" class="flex items-center space-x-1">
-                    <span class="text-[10px] font-bold text-gray-400 uppercase">Verificando...</span>
+            <div class="bg-gray-50 rounded-2xl p-4 mt-4 mb-6 flex justify-between items-center border border-gray-100">
+                <div>
+                    <p id="st-instruction" class="text-sm font-bold text-gray-700">Pesquise acima ou use o GPS</p>
+                    <p class="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Sinalização via Tabela Clara</p>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3 mb-5">
-                <div class="bg-blue-50/50 p-3 rounded-2xl border border-blue-100">
-                    <p class="text-[9px] text-blue-400 font-black uppercase tracking-tighter">Distância</p>
-                    <p class="text-lg font-black text-blue-700 leading-none"><span id="st-dist">--</span> km</p>
-                </div>
-                <div class="bg-green-50/50 p-3 rounded-2xl border border-green-100">
-                    <p class="text-[9px] text-green-400 font-black uppercase tracking-tighter">Passagem</p>
-                    <p class="text-lg font-black text-green-700 leading-none">R$ 5,40</p>
-                </div>
+                <span id="st-status-badge" class="bg-green-100 text-green-700 text-[10px] font-black px-3 py-1 rounded-md hidden">ABERTA</span>
             </div>
             
-            <a id="st-link" href="#" target="_blank" class="glow-button block w-full bg-blue-600 text-white text-center py-4 rounded-2xl font-black shadow-lg uppercase text-sm">
-                <i class="fas fa-location-arrow mr-2"></i>Como Chegar Lá
-            </a>
+            <button id="btn-navigate" class="w-full bg-blue-600 text-white flex items-center justify-center py-4 rounded-2xl font-black shadow-lg uppercase text-sm space-x-2 hover:bg-blue-700">
+                <i class="fas fa-directions text-lg"></i>
+                <span>Como Chegar Lá</span>
+            </button>
         </div>
 
-        <div class="mt-6">
-            <button onclick="toggleList()" class="w-full flex justify-between items-center p-4 bg-gray-50 rounded-2xl border border-gray-200 glow-button">
-                <span class="text-[10px] font-black text-gray-500 uppercase">Outras Estações Próximas</span>
-                <i id="list-icon" class="fas fa-chevron-down text-gray-400 transition-transform"></i>
+        <div class="mt-8 border-t border-gray-100 pt-6">
+            <button onclick="toggleList()" class="w-full flex justify-between items-center mb-4">
+                <span class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Estações e Trens Próximos</span>
+                <i id="list-icon" class="fas fa-chevron-down text-gray-300 transition-transform"></i>
             </button>
-            <div id="nearby-list" class="hidden-list mt-3 space-y-3 pb-6"></div>
+            <div id="nearby-list" class="space-y-3 pb-8">
+                </div>
         </div>
     </div>
 </div>
 
 <script>
-    let map, service, infoWindow, markers = [], heatCircles = [];
+    let map, userPos, markers = [], polyline, selectedStation;
     
-    // Dados para exemplo (podem vir da sua StationsData futuramente)
+    // Base de dados conforme referências de cores
     const stationsData = [
-        { nome: 'Consolação', linha: 'Linha 2-Verde', lat: -23.5587, lng: -46.6611, cor: '#007e5e' },
-        { nome: 'Paulista', linha: 'Linha 4-Amarela', lat: -23.5552, lng: -46.6622, cor: '#fff000' },
-        { nome: 'Trianon-Masp', linha: 'Linha 2-Verde', lat: -23.5641, lng: -46.6549, cor: '#007e5e' },
-        { nome: 'República', linha: 'Linha 3-Vermelha', lat: -23.5441, lng: -46.6425, cor: '#ee3135' },
-        { nome: 'Luz', linha: 'Linha 1-Azul', lat: -23.5365, lng: -46.6341, cor: '#005596' }
+        { id: 1, nome: 'Consolação', linha: 'Linha 2-Verde', lat: -23.5587, lng: -46.6611, cor: '#007e5e' },
+        { id: 2, nome: 'Paulista', linha: 'Linha 4-Amarela', lat: -23.5552, lng: -46.6622, cor: '#fff000' },
+        { id: 3, nome: 'República', linha: 'Linha 3-Vermelha', lat: -23.5441, lng: -46.6425, cor: '#ee3135' },
+        { id: 4, nome: 'Brás', linha: 'Linha 3-Vermelha', lat: -23.5482, lng: -46.6165, cor: '#ee3135' },
+        { id: 5, nome: 'Luz', linha: 'Linha 1-Azul', lat: -23.5365, lng: -46.6341, cor: '#005596' }
     ];
 
     function initMap() {
@@ -105,102 +89,125 @@
             styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
         });
 
-        infoWindow = new google.maps.InfoWindow();
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
 
-        document.getElementById("search-btn").onclick = () => {
+        // Correção do botão de pesquisa
+        document.getElementById("search-btn").addEventListener('click', () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) updatePosition(place.geometry.location);
-        };
+            if (place && place.geometry) {
+                updateUserPosition(place.geometry.location);
+            } else {
+                // Se o usuário apenas digitou e clicou sem selecionar o autocomplete
+                const service = new google.maps.places.PlacesService(map);
+                service.findPlaceFromQuery({query: input.value, fields: ['geometry']}, (results, status) => {
+                    if (status === google.maps.places.PlacesServiceStatus.OK) {
+                        updateUserPosition(results[0].geometry.location);
+                    }
+                });
+            }
+        });
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(p => {
-                const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
-                updatePosition(pos);
+                userPos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                updateUserPosition(userPos);
             });
         }
     }
 
-    function updatePosition(location) {
+    function updateUserPosition(location) {
+        userPos = location;
         map.setCenter(location);
-        markers.forEach(m => m.setMap(null));
-        heatCircles.forEach(c => c.setMap(null));
-        markers = [];
-        heatCircles = [];
+        clearMarkers();
 
-        // Ícone do Usuário (O Boneco Pegman solicitado)
+        // Boneco Pegman (conforme imagem em anexo)
         new google.maps.Marker({
             position: location,
             map: map,
             icon: {
                 url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69616fc0d10a212f979c7ace/e0aceee08_png-transparent-google-street-view-street-view-trusted-google-maps-pegman-look-photography-logo-immersive-video-thumbnail1.png',
-                scaledSize: new google.maps.Size(45, 45),
-                anchor: new google.maps.Point(22, 45)
-            },
-            zIndex: 999
+                scaledSize: new google.maps.Size(40, 40),
+                anchor: new google.maps.Point(20, 40)
+            }
         });
-
-        // Calor de Distância
-        heatCircles.push(new google.maps.Circle({
-            strokeColor: "#22c55e", strokeOpacity: 0.5, strokeWeight: 2, fillColor: "#22c55e", fillOpacity: 0.1, map: map, center: location, radius: 1000
-        }));
-        heatCircles.push(new google.maps.Circle({
-            strokeColor: "#ef4444", strokeOpacity: 0.3, strokeWeight: 2, fillColor: "#ef4444", fillOpacity: 0.05, map: map, center: location, radius: 3000
-        }));
 
         const sorted = stationsData.map(s => {
             const dist = google.maps.geometry.spherical.computeDistanceBetween(location, new google.maps.LatLng(s.lat, s.lng));
             return { ...s, distance: dist / 1000 };
         }).sort((a, b) => a.distance - b.distance);
 
-        renderUI(sorted);
+        renderStations(sorted);
+        selectStation(sorted[0]); // Seleciona a mais próxima por padrão
     }
 
-    function renderUI(sorted) {
-        const main = sorted[0];
-        document.getElementById('st-name').innerText = "Estação " + main.nome;
-        document.getElementById('st-dist').innerText = main.distance.toFixed(1);
-        document.getElementById('st-line').innerText = main.linha;
-        document.getElementById('st-line').style.backgroundColor = main.cor;
-        document.getElementById('st-link').href = `https://www.google.com/maps/dir/?api=1&destination=${main.lat},${main.lng}`;
-        
-        // Horário de Funcionamento
-        const hr = new Date().getHours();
-        const isOpen = hr >= 5 && hr < 24;
-        document.getElementById('st-status').innerHTML = isOpen ? 
-            `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span><span class="text-[10px] font-black text-green-600 uppercase">Estação Aberta</span>` : 
-            `<span class="w-2 h-2 rounded-full bg-red-500"></span><span class="text-[10px] font-black text-red-600 uppercase">Estação Fechada</span>`;
-
+    function renderStations(stations) {
         const list = document.getElementById('nearby-list');
         list.innerHTML = "";
         
-        sorted.forEach((s, i) => {
-            // Pins Clássicos no Mapa (Raio de 5km)
-            if (s.distance <= 5) {
-                const marker = new google.maps.Marker({
-                    position: { lat: s.lat, lng: s.lng },
-                    map: map,
-                    icon: {
-                        path: google.maps.SymbolPath.CIRCLE,
-                        fillColor: s.cor, fillOpacity: 1, strokeWeight: 2, strokeColor: "#FFFFFF", scale: 7
-                    }
-                });
-
-                marker.addListener("click", () => {
-                    infoWindow.setContent(`<div style="padding:5px"><b style="color:${s.cor}">${s.nome}</b><br><span style="font-size:10px">${s.linha}</span></div>`);
-                    infoWindow.open(map, marker);
-                });
-                markers.push(marker);
-
-                if (i > 0) {
-                    const item = document.createElement('div');
-                    item.className = "flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl shadow-sm";
-                    item.innerHTML = `<div><p class="text-sm font-black text-gray-800">${s.nome}</p><p class="text-[9px] text-gray-400 font-bold uppercase">${s.linha} • ${s.distance.toFixed(1)}km</p></div><span class="text-xs font-black text-green-600">R$ 5,40</span>`;
-                    list.appendChild(item);
+        stations.forEach(s => {
+            // Pin clássico no mapa para todas as estações próximas
+            const marker = new google.maps.Marker({
+                position: { lat: s.lat, lng: s.lng },
+                map: map,
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: s.cor, fillOpacity: 1, strokeWeight: 2, strokeColor: "#FFFFFF", scale: 6
                 }
-            }
+            });
+            markers.push(marker);
+
+            // Card da Lista com a bolinha da cor da linha
+            const item = document.createElement('div');
+            item.className = "station-card flex justify-between items-center p-4 bg-white border border-gray-100 rounded-2xl shadow-sm";
+            item.onclick = () => selectStation(s);
+            item.innerHTML = `
+                <div class="flex items-center">
+                    <span class="line-dot" style="background-color: ${s.cor}"></span>
+                    <div>
+                        <p class="text-sm font-black text-gray-800 uppercase">${s.nome}</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">${s.distance.toFixed(1)} km • ${s.linha}</p>
+                    </div>
+                </div>
+                <i class="fas fa-chevron-right text-gray-200 text-xs"></i>
+            `;
+            list.appendChild(item);
         });
+    }
+
+    function selectStation(station) {
+        selectedStation = station;
+        document.getElementById('st-name').innerText = station.nome;
+        document.getElementById('st-instruction').innerText = `${station.linha} • ${station.distance.toFixed(1)} km de distância`;
+        document.getElementById('st-status-badge').classList.remove('hidden');
+        
+        // Centraliza o mapa e desenha o pontilhado (Visão Macro)
+        map.panTo({ lat: station.lat, lng: station.lng });
+        drawDashedLine(userPos, { lat: station.lat, lng: station.lng });
+
+        // Ação do Botão "Como Chegar Lá"
+        document.getElementById('btn-navigate').onclick = () => {
+            const url = `https://www.google.com/maps/dir/?api=1&destination=${station.lat},${station.lng}&travelmode=walking`;
+            window.open(url, '_blank');
+        };
+    }
+
+    function drawDashedLine(from, to) {
+        if (polyline) polyline.setMap(null);
+        
+        const lineSymbol = { path: "M 0,-1 0,1", strokeOpacity: 1, scale: 3 };
+        polyline = new google.maps.Polyline({
+            path: [from, to],
+            strokeColor: "#3b82f6",
+            strokeOpacity: 0,
+            icons: [{ icon: lineSymbol, offset: "0", repeat: "20px" }],
+            map: map
+        });
+    }
+
+    function clearMarkers() {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
     }
 
     function toggleList() {
