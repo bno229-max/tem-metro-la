@@ -3,38 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estação Fácil - v3.0</title>
+    <title>Estação Fácil</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; height: 100%; z-index: 1; }
+        #map { flex-grow: 1; width: 100%; height: 100%; }
         
-        /* EFEITOS DE HOVER E BOTÕES */
+        /* HOVER E EFEITOS NOS BOTÕES */
         .btn-blue { 
             background-color: #2563eb; color: white; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; border: none;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15); cursor: pointer; 
         }
-        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-2px); shadow: 0 6px 15px rgba(37, 99, 235, 0.4); }
-        .btn-blue:active { transform: scale(0.95); }
+        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3); }
+        .btn-blue:active { transform: scale(0.96); }
 
         .station-card { 
             border: 1px solid #f1f5f9; border-radius: 20px; transition: all 0.2s ease; 
             cursor: pointer; background: white; 
         }
-        .station-card:hover { background-color: #f8fafc; border-color: #2563eb; transform: translateX(5px); }
+        .station-card:hover { background-color: #f8fafc; border-color: #2563eb; transform: translateX(4px); }
 
-        /* PAINEL INFERIOR */
         .bottom-panel { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: white; border-radius: 30px 30px 0 0; 
-            box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 40; 
-            padding: 20px; max-height: 85vh; display: flex; flex-direction: column;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.08); z-index: 40; 
+            padding: 20px; transition: height 0.4s ease;
         }
 
-        .scroll-area { overflow-y: auto; flex-grow: 1; margin-top: 15px; padding-bottom: 20px; }
+        .scroll-area { overflow-y: auto; max-height: 260px; margin-top: 15px; }
         .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
         .hidden { display: none; }
     </style>
@@ -46,7 +45,7 @@
         <h1 class="text-white text-3xl font-black italic tracking-tighter drop-shadow-md">ESTAÇÃO FÁCIL</h1>
         <div class="mt-6 pointer-events-auto">
             <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
-                <input type="text" id="pac-input" placeholder="Digite o endereço..." class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
+                <input type="text" id="pac-input" placeholder="Onde você está?" class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
                 <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase">BUSCAR</button>
             </div>
         </div>
@@ -54,18 +53,18 @@
 
     <div id="map"></div>
 
-    <div class="bottom-panel" id="panel">
+    <div class="bottom-panel">
         <div class="flex justify-center mb-4"><div class="w-12 h-1 bg-gray-200 rounded-full"></div></div>
         
         <div id="selection-header">
             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">Carregando...</h2>
+            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">CARREGANDO...</h2>
             
             <div class="bg-gray-50 rounded-3xl p-5 border border-gray-100 my-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-2">
                         <span id="main-dot" class="line-dot bg-blue-500"></span>
-                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">Identificando linha...</span>
+                        <span id="main-line" class="text-[13px] font-bold text-gray-600">Estação de Transporte</span>
                     </div>
                     <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
                 </div>
@@ -75,14 +74,14 @@
                 </div>
             </div>
 
-            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest">
-                <i class="fas fa-paper-plane mr-2"></i> COMO CHEGAR LÁ
+            <button class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                <i class="fas fa-location-arrow"></i> COMO CHEGAR LÁ
             </button>
         </div>
 
-        <div class="mt-6 flex flex-col flex-grow overflow-hidden">
-            <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400 mb-2">
-                <span class="text-[11px] font-black uppercase tracking-widest">Outras estações próximas</span>
+        <div class="mt-6">
+            <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400">
+                <span class="text-[11px] font-black uppercase tracking-widest">Estações ao redor</span>
                 <i id="list-icon" class="fas fa-chevron-up transition-transform"></i>
             </button>
             <div id="nearby-list" class="scroll-area hidden"></div>
@@ -91,42 +90,35 @@
 </div>
 
 <script>
-    let map, userMarker, markers = [], infoWindow, service;
+    let map, userMarker, markers = [], service;
 
     function initMap() {
-        // Tenta carregar o mapa. Se falhar, avisa o usuário.
-        try {
-            map = new google.maps.Map(document.getElementById("map"), {
-                center: { lat: -23.5505, lng: -46.6333 }, zoom: 15, 
-                disableDefaultUI: true,
-                styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
-            });
-            service = new google.maps.PlacesService(map);
-            infoWindow = new google.maps.InfoWindow();
-            
-            const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
-            document.getElementById("search-btn").addEventListener("click", () => {
-                const place = autocomplete.getPlace();
-                if (place && place.geometry) buscarEstacoes(place.geometry.location);
-            });
-        } catch (e) {
-            alert("Erro ao carregar o Google Maps. Verifique sua chave de API.");
-        }
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: { lat: -23.5505, lng: -46.6333 }, 
+            zoom: 16, 
+            disableDefaultUI: true,
+            styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
+        });
+        
+        service = new google.maps.PlacesService(map);
+        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
+
+        document.getElementById("search-btn").addEventListener("click", () => {
+            const place = autocomplete.getPlace();
+            if (place && place.geometry) buscarLocal(place.geometry.location);
+        });
     }
 
-    function buscarEstacoes(location) {
-        // LIMPEZA DE BUSCAS ANTIGAS
+    function buscarLocal(location) {
+        // Limpa tudo para nova busca
         if(userMarker) userMarker.setMap(null);
         markers.forEach(m => m.setMap(null));
         markers = [];
 
         map.setCenter(location);
-        userMarker = new google.maps.Marker({
-            position: location, map: map,
-            icon: { url: 'https://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' }
-        });
+        userMarker = new google.maps.Marker({ position: location, map: map });
 
-        // BUSCA POR PROXIMIDADE REAL (RANK BY DISTANCE)
+        // AQUI ESTÁ O SEGREDO DA ACURACIDADE: RANK_BY_DISTANCE
         const request = {
             location: location,
             rankBy: google.maps.RankBy.DISTANCE,
@@ -135,40 +127,32 @@
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const stations = results.map(place => ({
-                    nome: place.name,
-                    lat: place.geometry.location.lat(),
-                    lng: place.geometry.location.lng(),
-                    dist: google.maps.geometry.spherical.computeDistanceBetween(location, place.geometry.location) / 1000
+                const listData = results.slice(0, 5).map(r => ({
+                    nome: r.name,
+                    lat: r.geometry.location.lat(),
+                    lng: r.geometry.location.lng(),
+                    dist: google.maps.geometry.spherical.computeDistanceBetween(location, r.geometry.location) / 1000
                 }));
                 
-                renderizarLista(stations);
-                atualizarCardPrincipal(stations[0]);
+                atualizarUI(listData);
             }
         });
     }
 
-    function renderizarLista(stations) {
+    function atualizarUI(stations) {
         const container = document.getElementById('nearby-list');
         container.innerHTML = "";
         
-        stations.forEach((s, index) => {
-            const marker = new google.maps.Marker({
-                position: { lat: s.lat, lng: s.lng }, 
-                map: map,
-                label: (index + 1).toString()
-            });
-            
-            marker.addListener("click", () => {
-                infoWindow.setContent(`<div class="p-2"><b>${s.nome}</b><br>${s.dist.toFixed(1)} km</div>`);
-                infoWindow.open(map, marker);
-                atualizarCardPrincipal(s, true);
-            });
+        stations.forEach((s, i) => {
+            const marker = new google.maps.Marker({ position: {lat: s.lat, lng: s.lng}, map: map });
             markers.push(marker);
 
             const card = document.createElement('div');
-            card.className = "station-card p-4 mb-3 flex justify-between items-center shadow-sm";
-            card.onclick = () => atualizarCardPrincipal(s, true);
+            card.className = "station-card p-4 mb-3 flex justify-between items-center";
+            card.onclick = () => {
+                selecionarEstacao(s);
+                toggleList(true); // Auto-recolher lista
+            };
             card.innerHTML = `
                 <div class="flex items-center gap-3">
                     <span class="line-dot bg-blue-500"></span>
@@ -180,14 +164,14 @@
                 <i class="fas fa-chevron-right text-gray-200"></i>
             `;
             container.appendChild(card);
+            if(i === 0) selecionarEstacao(s);
         });
     }
 
-    function atualizarCardPrincipal(s, fecharLista = false) {
+    function selecionarEstacao(s) {
         document.getElementById('main-name').innerText = s.nome;
         document.getElementById('main-dist').innerText = s.dist.toFixed(1);
         map.panTo({ lat: s.lat, lng: s.lng });
-        if(fecharLista) toggleList(true);
     }
 
     function toggleList(forceClose = false) {
@@ -199,6 +183,8 @@
         }
     }
 </script>
-<script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_AQUI&libraries=places,geometry&callback=initMap" async defer></script>
+
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU&libraries=places,geometry&callback=initMap" async defer></script>
+
 </body>
 </html>
