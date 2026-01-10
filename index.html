@@ -3,148 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estação Fácil - v3.0</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <title>Estação Fácil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; display: flex; flex-direction: column; }
         #map { flex-grow: 1; width: 100%; height: 100%; z-index: 1; }
         
-        /* Botões e Interação */
-        .btn-blue { 
-            background-color: #2563eb; color: white; transition: all 0.2s ease; 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); 
-        }
+        .header-section { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: linear-gradient(180deg, rgba(30, 64, 175, 0.9) 0%, rgba(255, 255, 255, 0) 100%); padding: 30px 20px 60px; pointer-events: none; }
+        .search-area { position: absolute; top: 100px; left: 15px; right: 15px; z-index: 30; pointer-events: auto; }
+        
+        .bottom-panel { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.1); z-index: 40; padding: 20px; transition: all 0.4s ease; }
+
+        .btn-blue { background-color: #2563eb; color: white; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; border: none; }
         .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-1px); }
-        .btn-blue:active { transform: scale(0.96); }
+        .btn-blue:active { transform: scale(0.97); }
 
-        .station-item { 
-            border: 1px solid #F1F5F9; border-radius: 20px; transition: all 0.2s; 
-            cursor: pointer; background: white; 
-        }
-        .station-item:hover { background-color: #f8fafc; border-color: #2563eb; }
+        .station-card { border: 1px solid #f1f5f9; border-radius: 20px; transition: all 0.2s ease; cursor: pointer; }
+        .station-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
 
-        /* Painel Deslizante */
-        .bottom-panel { 
-            position: absolute; bottom: 0; left: 0; right: 0; 
-            background: white; border-radius: 32px 32px 0 0; 
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.1); z-index: 40; 
-            padding: 20px; max-height: 85vh; display: flex; flex-direction: column;
-        }
-
-        .scroll-list { overflow-y: auto; flex-grow: 1; margin-top: 15px; display: none; }
-        .list-open .scroll-list { display: block; }
-        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .type-badge { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 5px; background: #e2e8f0; color: #475569; text-transform: uppercase; }
+        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
+        .scroll-area { overflow-y: auto; max-height: 300px; margin-top: 15px; padding-bottom: 20px; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="absolute top-0 left-0 right-0 z-20 p-6 pt-10 pointer-events-none">
-        <h1 class="text-white text-3xl font-black italic tracking-tighter drop-shadow-lg">ESTAÇÃO FÁCIL</h1>
-        <div class="mt-6 pointer-events-auto">
-            <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center border border-gray-100">
-                <input type="text" id="pac-input" placeholder="Para onde você vai?" class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
-                <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
-            </div>
+    <div class="header-section text-center">
+        <h1 class="text-white text-3xl font-black italic tracking-tighter">ESTAÇÃO FÁCIL</h1>
+        <p class="text-blue-100 text-[10px] font-bold">Encontre a estação mais próxima de você</p>
+    </div>
+
+    <div class="search-area">
+        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
+            <div class="pl-4 text-gray-300"><i class="fas fa-search"></i></div>
+            <input type="text" id="pac-input" placeholder="Onde você está agora?" class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
+            <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-panel" id="main-panel">
+    <div class="bottom-panel" id="panel">
         <div class="flex justify-center mb-4"><div class="w-12 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="top-info">
+        <div id="selection-header">
             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="st-name-main" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-tight">Localizando...</h2>
+            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">LOCALIZANDO...</h2>
             
-            <div class="bg-slate-50 rounded-3xl p-5 border border-slate-100 my-4">
+            <div class="bg-gray-50 rounded-3xl p-5 border border-gray-100 my-4">
                 <div class="flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span id="st-dot-main" class="line-dot bg-gray-300"></span>
-                        <span id="st-line-main" class="text-[13px] font-bold text-gray-600 italic">Buscando linha...</span>
+                    <div class="flex items-center">
+                        <span id="main-dot" class="line-dot bg-blue-600"></span>
+                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">Identificando Linha...</span>
+                        <span id="main-type" class="type-badge ml-2">Metrô/Trem</span>
                     </div>
                     <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
                 </div>
-                <div class="mt-4 flex items-center gap-4 text-[11px] font-black text-gray-400">
-                    <span><i class="fas fa-location-dot mr-1"></i> <span id="st-dist-main">0.0</span> km</span>
+                <div class="mt-4 flex items-center gap-4 text-[11px] font-black">
+                    <span class="text-gray-400"><i class="fas fa-location-dot mr-1"></i> <span id="main-dist">0.0</span> km</span>
                     <span class="text-green-600 italic">R$ 5,40</span>
                 </div>
             </div>
 
-            <button id="btn-route" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2">
                 COMO CHEGAR LÁ
             </button>
         </div>
 
-        <div class="mt-8 flex flex-col flex-grow overflow-hidden">
+        <div class="mt-6">
             <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400">
-                <span class="text-[11px] font-black uppercase tracking-widest">Estações ao redor</span>
+                <span class="text-[11px] font-black uppercase tracking-widest">Outras Estações Próximas</span>
                 <i id="list-icon" class="fas fa-chevron-up transition-transform"></i>
             </button>
-            <div id="nearby-list" class="scroll-list">
-                </div>
+            <div id="nearby-list" class="scroll-area hidden"></div>
         </div>
     </div>
 </div>
 
 <script>
-    let map, userMarker, markers = [], infoWindow, service;
+    let map, userMarker, markers = [], service, infoWindow;
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            zoom: 16, center: { lat: -23.5505, lng: -46.6333 }, 
+            center: { lat: -23.5505, lng: -46.6333 }, 
+            zoom: 16, 
             disableDefaultUI: true,
             styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
         });
         
         service = new google.maps.PlacesService(map);
         infoWindow = new google.maps.InfoWindow();
-        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
-
-        // Busca Automática por GPS
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(p => {
-                const myPos = { lat: p.coords.latitude, lng: p.coords.longitude };
-                searchStations(myPos);
-            });
-        }
+        const input = document.getElementById("pac-input");
+        const autocomplete = new google.maps.places.Autocomplete(input);
 
         document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) searchStations(place.geometry.location);
+            if (place && place.geometry) updatePosition(place.geometry.location);
         });
+
+        // Localização Inicial Automática
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(p => {
+                const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
+                updatePosition(pos);
+            });
+        }
     }
 
-    function searchStations(location) {
-        // Limpar mapa
+    function updatePosition(location) {
+        // Limpeza total
         if(userMarker) userMarker.setMap(null);
         markers.forEach(m => m.setMap(null));
         markers = [];
 
         map.setCenter(location);
         userMarker = new google.maps.Marker({
-            position: location, map: map,
+            position: location, 
+            map: map,
             icon: { url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' }
         });
 
+        // BUSCA REAL POR DISTÂNCIA (Resolve o erro das estações longe)
         const request = {
             location: location,
-            rankBy: google.maps.RankBy.DISTANCE, // Garante que a mais perto venha primeiro
+            rankBy: google.maps.RankBy.DISTANCE,
             types: ['subway_station', 'train_station']
         };
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const stations = results.map(r => ({
+                const stations = results.slice(0, 5).map(r => ({
                     nome: r.name,
                     lat: r.geometry.location.lat(),
                     lng: r.geometry.location.lng(),
                     dist: google.maps.geometry.spherical.computeDistanceBetween(location, r.geometry.location) / 1000
                 }));
+                
                 renderList(stations);
                 selectStation(stations[0], false);
             }
@@ -152,20 +151,24 @@
     }
 
     function renderList(stations) {
-        const container = document.getElementById('nearby-list');
-        container.innerHTML = "";
+        const list = document.getElementById('nearby-list');
+        list.innerHTML = "";
         
         stations.forEach(s => {
-            const marker = new google.maps.Marker({ position: {lat: s.lat, lng: s.lng}, map: map });
-            marker.addListener('click', () => {
-                infoWindow.setContent(`<div class="p-2 font-bold">${s.nome}</div>`);
+            const marker = new google.maps.Marker({
+                position: { lat: s.lat, lng: s.lng }, 
+                map: map
+            });
+            
+            marker.addListener("click", () => {
+                infoWindow.setContent(`<div style="padding:5px"><b>${s.nome}</b></div>`);
                 infoWindow.open(map, marker);
                 selectStation(s, true);
             });
             markers.push(marker);
 
             const card = document.createElement('div');
-            card.className = "station-item p-4 mb-3 flex justify-between items-center shadow-sm";
+            card.className = "station-card p-4 mb-3 flex justify-between items-center shadow-sm";
             card.onclick = () => selectStation(s, true);
             card.innerHTML = `
                 <div class="flex items-center gap-3">
@@ -177,26 +180,26 @@
                 </div>
                 <i class="fas fa-chevron-right text-gray-200"></i>
             `;
-            container.appendChild(card);
+            list.appendChild(card);
         });
     }
 
-    function selectStation(s, shouldCollapse) {
-        document.getElementById('st-name-main').innerText = s.nome;
-        document.getElementById('st-dist-main').innerText = s.dist.toFixed(2);
-        document.getElementById('st-line-main').innerText = "Linha Identificada";
-        document.getElementById('st-dot-main').className = "line-dot bg-blue-600";
-        
+    function selectStation(s, collapse) {
+        document.getElementById('main-name').innerText = s.nome;
+        document.getElementById('main-dist').innerText = s.dist.toFixed(2);
         map.panTo({ lat: s.lat, lng: s.lng });
-        if(shouldCollapse) toggleList(true);
+        if(collapse) toggleList(true);
     }
 
     function toggleList(forceClose = false) {
-        const panel = document.getElementById('main-panel');
-        if(forceClose) {
-            panel.classList.remove('list-open');
+        const list = document.getElementById('nearby-list');
+        const icon = document.getElementById('list-icon');
+        if(forceClose || !list.classList.contains('hidden')) {
+            list.classList.add('hidden');
+            icon.classList.remove('rotate-180');
         } else {
-            panel.classList.toggle('list-open');
+            list.classList.remove('hidden');
+            icon.classList.add('rotate-180');
         }
     }
 </script>
