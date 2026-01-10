@@ -3,39 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Estação Fácil</title>
+    <title>Estação Fácil - v3.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; height: 100%; }
+        #map { flex-grow: 1; width: 100%; height: 100%; z-index: 1; }
         
-        /* Botões com Efeito Hover/Active */
+        /* EFEITOS DE HOVER E BOTÕES */
         .btn-blue { 
-            background-color: #2563eb; color: white; transition: all 0.2s ease; 
-            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; 
+            background-color: #2563eb; color: white; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; border: none;
         }
-        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-2px); shadow: 0 6px 15px rgba(37, 99, 235, 0.4); }
         .btn-blue:active { transform: scale(0.95); }
 
-        /* Cards da Lista com Hover */
         .station-card { 
-            border: 1px solid #f1f5f9; border-radius: 20px; 
-            transition: all 0.2s ease; cursor: pointer; background: white;
+            border: 1px solid #f1f5f9; border-radius: 20px; transition: all 0.2s ease; 
+            cursor: pointer; background: white; 
         }
-        .station-card:hover { background-color: #f8fafc; border-color: #2563eb; }
+        .station-card:hover { background-color: #f8fafc; border-color: #2563eb; transform: translateX(5px); }
 
+        /* PAINEL INFERIOR */
         .bottom-panel { 
             position: absolute; bottom: 0; left: 0; right: 0; 
             background: white; border-radius: 30px 30px 0 0; 
             box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 40; 
-            padding: 20px; transition: height 0.4s ease;
+            padding: 20px; max-height: 85vh; display: flex; flex-direction: column;
         }
 
+        .scroll-area { overflow-y: auto; flex-grow: 1; margin-top: 15px; padding-bottom: 20px; }
         .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-        .scroll-area { overflow-y: auto; max-height: 280px; margin-top: 15px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -46,7 +46,7 @@
         <h1 class="text-white text-3xl font-black italic tracking-tighter drop-shadow-md">ESTAÇÃO FÁCIL</h1>
         <div class="mt-6 pointer-events-auto">
             <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
-                <input type="text" id="pac-input" placeholder="Buscar endereço..." class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
+                <input type="text" id="pac-input" placeholder="Digite o endereço..." class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
                 <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase">BUSCAR</button>
             </div>
         </div>
@@ -59,13 +59,13 @@
         
         <div id="selection-header">
             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">AGUARDANDO...</h2>
+            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">Carregando...</h2>
             
             <div class="bg-gray-50 rounded-3xl p-5 border border-gray-100 my-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center gap-2">
-                        <span id="main-dot" class="line-dot"></span>
-                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">---</span>
+                        <span id="main-dot" class="line-dot bg-blue-500"></span>
+                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">Identificando linha...</span>
                     </div>
                     <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
                 </div>
@@ -75,14 +75,14 @@
                 </div>
             </div>
 
-            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                COMO CHEGAR LÁ
+            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest">
+                <i class="fas fa-paper-plane mr-2"></i> COMO CHEGAR LÁ
             </button>
         </div>
 
-        <div class="mt-6">
-            <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400">
-                <span class="text-[11px] font-black uppercase tracking-widest">Estações e trens próximos</span>
+        <div class="mt-6 flex flex-col flex-grow overflow-hidden">
+            <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400 mb-2">
+                <span class="text-[11px] font-black uppercase tracking-widest">Outras estações próximas</span>
                 <i id="list-icon" class="fas fa-chevron-up transition-transform"></i>
             </button>
             <div id="nearby-list" class="scroll-area hidden"></div>
@@ -94,25 +94,28 @@
     let map, userMarker, markers = [], infoWindow, service;
 
     function initMap() {
-        map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: -23.5489, lng: -46.6388 }, zoom: 16, 
-            disableDefaultUI: true,
-            styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
-        });
-        
-        service = new google.maps.places.PlacesService(map);
-        infoWindow = new google.maps.InfoWindow();
-        
-        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
-        
-        document.getElementById("search-btn").addEventListener("click", () => {
-            const place = autocomplete.getPlace();
-            if (place && place.geometry) searchNearbyStations(place.geometry.location);
-        });
+        // Tenta carregar o mapa. Se falhar, avisa o usuário.
+        try {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: -23.5505, lng: -46.6333 }, zoom: 15, 
+                disableDefaultUI: true,
+                styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
+            });
+            service = new google.maps.PlacesService(map);
+            infoWindow = new google.maps.InfoWindow();
+            
+            const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
+            document.getElementById("search-btn").addEventListener("click", () => {
+                const place = autocomplete.getPlace();
+                if (place && place.geometry) buscarEstacoes(place.geometry.location);
+            });
+        } catch (e) {
+            alert("Erro ao carregar o Google Maps. Verifique sua chave de API.");
+        }
     }
 
-    function searchNearbyStations(location) {
-        // Limpeza Total
+    function buscarEstacoes(location) {
+        // LIMPEZA DE BUSCAS ANTIGAS
         if(userMarker) userMarker.setMap(null);
         markers.forEach(m => m.setMap(null));
         markers = [];
@@ -120,10 +123,10 @@
         map.setCenter(location);
         userMarker = new google.maps.Marker({
             position: location, map: map,
-            icon: { url: 'https://maps.google.com/mapfiles/kml/paddle/wht-blank.png', scaledSize: new google.maps.Size(30, 30) }
+            icon: { url: 'https://maps.google.com/mapfiles/ms/icons/blue-pushpin.png' }
         });
 
-        // BUSCA REAL DO GOOGLE: Prioridade por distância física (RankBy.DISTANCE)
+        // BUSCA POR PROXIMIDADE REAL (RANK BY DISTANCE)
         const request = {
             location: location,
             rankBy: google.maps.RankBy.DISTANCE,
@@ -132,39 +135,40 @@
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const processed = results.map(place => ({
+                const stations = results.map(place => ({
                     nome: place.name,
                     lat: place.geometry.location.lat(),
                     lng: place.geometry.location.lng(),
                     dist: google.maps.geometry.spherical.computeDistanceBetween(location, place.geometry.location) / 1000
                 }));
                 
-                renderResults(processed);
-                selectStation(processed[0], false);
+                renderizarLista(stations);
+                atualizarCardPrincipal(stations[0]);
             }
         });
     }
 
-    function renderResults(stations) {
-        const list = document.getElementById('nearby-list');
-        list.innerHTML = "";
+    function renderizarLista(stations) {
+        const container = document.getElementById('nearby-list');
+        container.innerHTML = "";
         
-        stations.forEach(s => {
+        stations.forEach((s, index) => {
             const marker = new google.maps.Marker({
-                position: { lat: s.lat, lng: s.lng }, map: map,
-                title: s.nome
+                position: { lat: s.lat, lng: s.lng }, 
+                map: map,
+                label: (index + 1).toString()
             });
             
             marker.addListener("click", () => {
-                infoWindow.setContent(`<div class="p-2 font-bold">${s.nome}</div>`);
+                infoWindow.setContent(`<div class="p-2"><b>${s.nome}</b><br>${s.dist.toFixed(1)} km</div>`);
                 infoWindow.open(map, marker);
-                selectStation(s, true);
+                atualizarCardPrincipal(s, true);
             });
             markers.push(marker);
 
             const card = document.createElement('div');
             card.className = "station-card p-4 mb-3 flex justify-between items-center shadow-sm";
-            card.onclick = () => selectStation(s, true);
+            card.onclick = () => atualizarCardPrincipal(s, true);
             card.innerHTML = `
                 <div class="flex items-center gap-3">
                     <span class="line-dot bg-blue-500"></span>
@@ -175,29 +179,23 @@
                 </div>
                 <i class="fas fa-chevron-right text-gray-200"></i>
             `;
-            list.appendChild(card);
+            container.appendChild(card);
         });
     }
 
-    function selectStation(s, collapse) {
+    function atualizarCardPrincipal(s, fecharLista = false) {
         document.getElementById('main-name').innerText = s.nome;
         document.getElementById('main-dist').innerText = s.dist.toFixed(1);
-        document.getElementById('main-line').innerText = "Estação de Transporte";
-        document.getElementById('main-dot').className = "line-dot bg-blue-600";
-        
         map.panTo({ lat: s.lat, lng: s.lng });
-        if(collapse) toggleList(true);
+        if(fecharLista) toggleList(true);
     }
 
     function toggleList(forceClose = false) {
         const list = document.getElementById('nearby-list');
-        const icon = document.getElementById('list-icon');
         if(forceClose || !list.classList.contains('hidden')) {
             list.classList.add('hidden');
-            icon.classList.remove('rotate-180');
         } else {
             list.classList.remove('hidden');
-            icon.classList.add('rotate-180');
         }
     }
 </script>
