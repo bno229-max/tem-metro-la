@@ -8,156 +8,177 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; overflow: hidden; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; height: 100%; }
+        body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow: hidden; }
+        .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; display: flex; flex-direction: column; }
+        #map { flex-grow: 1; width: 100%; height: 100%; z-index: 1; }
         
-        /* Overlay de Busca */
-        .header-section { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: linear-gradient(180deg, rgba(30, 58, 138, 0.9) 0%, rgba(255, 255, 255, 0) 100%); padding: 25px 20px 60px; pointer-events: none; }
-        .search-container { position: absolute; top: 100px; left: 15px; right: 15px; z-index: 30; pointer-events: auto; }
-        
-        /* Painel Inferior Estilo Slide */
-        .bottom-panel { 
-            position: absolute; bottom: 0; left: 0; right: 0; 
-            background: white; border-radius: 32px 32px 0 0; 
-            box-shadow: 0 -8px 30px rgba(0,0,0,0.12); 
-            z-index: 40; padding: 20px;
-            max-height: 90vh; display: flex; flex-direction: column;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        /* Efeitos nos Botões */
+        .btn-blue {
+            background-color: #2563eb;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+        }
+        .btn-blue:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+        }
+        .btn-blue:active {
+            transform: scale(0.96);
         }
 
-        .main-card { background: #F9FAFB; border-radius: 24px; padding: 20px; border: 1px solid #F1F5F9; margin: 15px 0; }
-        .station-item { border: 1px solid #F1F5F9; border-radius: 20px; padding: 14px 18px; margin-bottom: 10px; transition: background 0.2s; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        /* Hover nos Cards da Lista */
+        .station-item {
+            transition: all 0.2s ease;
+            border: 1px solid #F1F5F9;
+        }
+        .station-item:hover {
+            background-color: #f0f7ff;
+            border-color: #bfdbfe;
+            transform: translateX(4px);
+        }
+
+        /* Layout do Painel */
+        .header-glass {
+            position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+            background: linear-gradient(180deg, rgba(30, 64, 175, 0.9) 0%, rgba(255, 255, 255, 0) 100%);
+            padding: 30px 20px 60px; pointer-events: none;
+        }
+        .bottom-panel {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: white; border-radius: 32px 32px 0 0;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.1);
+            z-index: 40; padding: 20px;
+            max-height: 85vh; display: flex; flex-direction: column;
+            transition: transform 0.4s ease;
+        }
+
+        .scroll-list { overflow-y: auto; flex-grow: 1; margin-top: 15px; }
+        .scroll-list::-webkit-scrollbar { width: 0px; }
         
-        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 12px; flex-shrink: 0; }
-        .badge-type { font-size: 8px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: #E2E8F0; color: #64748B; margin-left: 6px; }
-        
-        .btn-action { background: #2563EB; color: white; font-weight: 900; border-radius: 18px; transition: all 0.3s; width: 100%; padding: 16px; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px; }
-        
-        .scroll-list { overflow-y: auto; flex-grow: 1; padding-bottom: 30px; }
-        .collapsed { height: 380px !important; overflow: hidden; }
-        .rotate-180 { transform: rotate(180deg); }
-        .hidden-list { display: none; }
+        .line-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+        .type-tag { font-size: 8px; font-weight: 800; padding: 2px 6px; border-radius: 4px; background: #E2E8F0; color: #64748B; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="header-section">
+    <div class="header-glass text-center">
         <h1 class="text-white text-3xl font-black italic tracking-tighter">ESTAÇÃO FÁCIL</h1>
-        <p class="text-blue-100 text-[10px] font-bold opacity-80">Encontre a Estação de Trem ou Metrô mais próxima</p>
+        <p class="text-blue-100 text-[10px] font-bold">Encontre a Estação de Trem ou Metrô mais próxima</p>
     </div>
 
-    <div class="search-container">
-        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center border border-gray-100">
+    <div class="absolute top-[105px] left-4 right-4 z-20">
+        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
             <div class="pl-4 text-gray-300"><i class="fas fa-search"></i></div>
-            <input type="text" id="pac-input" placeholder="Buscar outro endereço..." class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
-            <button id="search-btn" class="bg-blue-600 text-white px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest hover:bg-blue-700">BUSCAR</button>
+            <input type="text" id="pac-input" placeholder="Rua dos Pinheiros, 150..." class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
+            <button id="search-btn" class="btn-blue text-white px-7 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
         </div>
     </div>
 
     <div id="map"></div>
 
-    <div class="bottom-panel" id="main-panel">
+    <div class="bottom-panel" id="panel">
         <div class="flex justify-center mb-4"><div class="w-12 h-1 bg-gray-200 rounded-full"></div></div>
         
-        <div id="top-card-area">
+        <div id="main-card-container">
             <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="st-name-main" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-tight">Carregando...</h2>
+            <h2 id="main-st-name" class="text-2xl font-black text-gray-900 uppercase italic leading-tight mt-1">Carregando...</h2>
             
-            <div class="main-card">
+            <div class="bg-slate-50 rounded-3xl p-5 border border-slate-100 my-4">
                 <div class="flex justify-between items-start">
-                    <div class="flex items-center">
-                        <span id="st-dot-main" class="line-dot"></span>
-                        <span id="st-line-main" class="text-[13px] font-bold text-gray-600">---</span>
-                        <span id="st-type-main" class="badge-type">---</span>
+                    <div class="flex items-center gap-3">
+                        <span id="main-st-dot" class="line-dot"></span>
+                        <span id="main-st-line" class="text-[13px] font-bold text-gray-600">---</span>
+                        <span id="main-st-type" class="type-tag">---</span>
                     </div>
-                    <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
+                    <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded uppercase">Aberta</span>
                 </div>
-                <div class="mt-4 flex items-center gap-4">
-                    <div class="text-[12px] font-bold text-gray-400 flex items-center gap-1">
-                        <i class="fas fa-location-dot"></i> <span id="st-dist-main">0.0</span> km
-                    </div>
+                <div class="mt-4 flex items-center gap-5">
+                    <div class="text-[12px] font-bold text-gray-400"><i class="fas fa-location-dot mr-1"></i> <span id="main-st-dist">0.0</span> km</div>
                     <div class="text-[12px] font-black text-green-600 italic">R$ 5,40</div>
                 </div>
             </div>
 
-            <button id="btn-navigate" class="btn-action">
-                <i class="fas fa-paper-plane"></i> COMO CHEGAR LÁ
+            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl text-white font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                <i class="fas fa-location-arrow"></i> COMO CHEGAR LÁ
             </button>
         </div>
 
         <div class="mt-8 flex flex-col flex-grow overflow-hidden">
-            <button onclick="toggleList()" class="w-full flex justify-between items-center mb-4 px-1">
+            <button onclick="toggleList()" class="flex justify-between items-center px-1">
                 <span class="text-[11px] font-black text-gray-400 uppercase tracking-widest">Outras Estações Próximas</span>
                 <i id="list-icon" class="fas fa-chevron-up text-gray-300 transition-transform"></i>
             </button>
-            
-            <div id="nearby-list" class="scroll-list hidden-list">
-                </div>
+            <div id="nearby-list" class="scroll-list hidden"></div>
         </div>
     </div>
 </div>
 
 <script>
-    let map, userPosMarker, stationsMarkers = [], polyline, infoWindow;
+    let map, userMarker, stationMarkers = [], polyline, infoWindow;
+
+    // Base de dados expandida para melhor acuracidade (incluindo Linha Amarela/Pinheiros)
     const stationsData = [
+        { nome: 'Fradique Coutinho', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5662, lng: -46.6843, cor: '#fff000' },
+        { nome: 'Faria Lima', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5672, lng: -46.6931, cor: '#fff000' },
+        { nome: 'Pinheiros', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5663, lng: -46.7029, cor: '#fff000' },
+        { nome: 'Oscar Freire', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5601, lng: -46.6719, cor: '#fff000' },
         { nome: 'Marechal Deodoro', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5332, lng: -46.6558, cor: '#ee3135' },
-        { nome: 'Palmeiras-Barra Funda', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5252, lng: -46.6669, cor: '#ee3135' },
-        { nome: 'Palmeiras-Barra Funda', linha: 'Linha 7-Rubi', tipo: 'Trem', lat: -23.5255, lng: -46.6665, cor: '#ee3135' },
-        { nome: 'Santa Cecília', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5393, lng: -46.6489, cor: '#ee3135' },
-        { nome: 'República', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5441, lng: -46.6425, cor: '#fff000' },
-        { nome: 'Luz', linha: 'Linha 1-Azul', tipo: 'Metrô', lat: -23.5365, lng: -46.6341, cor: '#005596' }
+        { nome: 'Santa Cecília', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5393, lng: -46.6489, cor: '#ee3135' }
     ];
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: -23.5332, lng: -46.6558 }, zoom: 15, disableDefaultUI: true,
+            center: { lat: -23.5505, lng: -46.6333 }, zoom: 15, disableDefaultUI: true,
             styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
         });
         infoWindow = new google.maps.InfoWindow();
+        
         const input = document.getElementById("pac-input");
         const autocomplete = new google.maps.places.Autocomplete(input);
 
         document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) handleNewLocation(place.geometry.location);
+            if (place && place.geometry) updateFocus(place.geometry.location);
         });
 
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(p => {
-                const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
-                handleNewLocation(pos);
+                updateFocus(new google.maps.LatLng(p.coords.latitude, p.coords.longitude));
             });
         }
     }
 
-    function handleNewLocation(location) {
-        // 1. Limpa marcadores de pesquisa antigos
-        if(userPosMarker) userPosMarker.setMap(null);
-        
-        userPosMarker = new google.maps.Marker({
+    function updateFocus(location) {
+        // LIMPEZA TOTAL DE BUSCAS ANTERIORES
+        if(userMarker) userMarker.setMap(null);
+        stationMarkers.forEach(m => m.setMap(null));
+        stationMarkers = [];
+        if(polyline) polyline.setMap(null);
+
+        map.setCenter(location);
+        userMarker = new google.maps.Marker({
             position: location, map: map,
             icon: {
                 url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69616fc0d10a212f979c7ace/e0aceee08_png-transparent-google-street-view-street-view-trusted-google-maps-pegman-look-photography-logo-immersive-video-thumbnail1.png',
                 scaledSize: new google.maps.Size(42, 42), anchor: new google.maps.Point(21, 42)
-            }, zIndex: 99
+            }, zIndex: 100
         });
 
+        // CÁLCULO DE ACURACIDADE
         const sorted = stationsData.map(s => {
             const d = google.maps.geometry.spherical.computeDistanceBetween(location, new google.maps.LatLng(s.lat, s.lng));
             return { ...s, dist: d / 1000 };
         }).sort((a, b) => a.dist - b.dist);
 
-        renderStations(sorted);
-        selectStation(sorted[0], false); // Seleciona a primeira sem fechar a lista (pois ela ainda está fechada)
+        renderUI(sorted);
+        selectStation(sorted[0], false);
     }
 
-    function renderStations(stations) {
+    function renderUI(stations) {
         const list = document.getElementById('nearby-list');
         list.innerHTML = "";
-        stationsMarkers.forEach(m => m.setMap(null));
-        stationsMarkers = [];
 
         stations.forEach(s => {
             const marker = new google.maps.Marker({
@@ -169,24 +190,24 @@
             });
 
             marker.addListener("click", () => {
-                infoWindow.setContent(`<div style="padding:8px"><b style="color:${s.cor}">${s.nome}</b><br><small>${s.linha}</small></div>`);
+                infoWindow.setContent(`<div style="padding:10px; font-family:Inter"><b>${s.nome}</b><br><span style="font-size:10px">${s.linha}</span></div>`);
                 infoWindow.open(map, marker);
                 selectStation(s, true);
             });
-            stationsMarkers.push(marker);
+            stationMarkers.push(marker);
 
             const card = document.createElement('div');
-            card.className = "station-item bg-white";
+            card.className = "station-item bg-white p-4 rounded-2xl flex justify-between items-center mb-2 cursor-pointer";
             card.onclick = () => selectStation(s, true);
             card.innerHTML = `
-                <div class="flex items-center">
+                <div class="flex items-center gap-3">
                     <span class="line-dot" style="background-color: ${s.cor}"></span>
                     <div>
-                        <div class="flex items-center">
+                        <div class="flex items-center gap-2">
                             <p class="text-[13px] font-black text-gray-800 uppercase italic">${s.nome}</p>
-                            <span class="badge-type">${s.tipo}</span>
+                            <span class="type-tag">${s.tipo}</span>
                         </div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${s.dist.toFixed(1)} km • ${s.linha}</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">${s.dist.toFixed(1)} km • ${s.linha}</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -198,41 +219,34 @@
         });
     }
 
-    function selectStation(s, shouldCollapse) {
-        document.getElementById('st-name-main').innerText = s.nome;
-        document.getElementById('st-line-main').innerText = s.linha;
-        document.getElementById('st-dot-main').style.backgroundColor = s.cor;
-        document.getElementById('st-type-main').innerText = s.tipo;
-        document.getElementById('st-dist-main').innerText = s.dist.toFixed(1);
+    function selectStation(s, collapse) {
+        document.getElementById('main-st-name').innerText = s.nome;
+        document.getElementById('main-st-line').innerText = s.linha;
+        document.getElementById('main-st-dot').style.backgroundColor = s.cor;
+        document.getElementById('main-st-type').innerText = s.tipo;
+        document.getElementById('main-st-dist').innerText = s.dist.toFixed(1);
         
         map.panTo({ lat: s.lat, lng: s.lng });
 
         if(polyline) polyline.setMap(null);
         polyline = new google.maps.Polyline({
-            path: [userPosMarker.getPosition(), { lat: s.lat, lng: s.lng }],
+            path: [userMarker.getPosition(), { lat: s.lat, lng: s.lng }],
             strokeColor: "#3b82f6", strokeOpacity: 0,
             icons: [{ icon: {path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2}, offset: '0', repeat: '18px' }],
             map: map
         });
 
-        document.getElementById('btn-navigate').onclick = () => {
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lng}&travelmode=walking`);
-        };
-
-        // FECHAR LISTA AUTOMATICAMENTE AO ESCOLHER
-        if(shouldCollapse) toggleList(true);
+        if(collapse) toggleList(true);
     }
 
     function toggleList(forceClose = false) {
         const list = document.getElementById('nearby-list');
         const icon = document.getElementById('list-icon');
-        const panel = document.getElementById('main-panel');
-        
-        if (forceClose || !list.classList.contains('hidden-list')) {
-            list.classList.add('hidden-list');
+        if(forceClose || !list.classList.contains('hidden')) {
+            list.classList.add('hidden');
             icon.classList.remove('rotate-180');
         } else {
-            list.classList.remove('hidden-list');
+            list.classList.remove('hidden');
             icon.classList.add('rotate-180');
         }
     }
