@@ -10,42 +10,45 @@
     <style>
         body { margin: 0; font-family: 'Inter', sans-serif; background-color: #f3f4f6; overflow: hidden; }
         .app-container { width: 100%; max-width: 430px; height: 100vh; position: relative; margin: 0 auto; background: white; display: flex; flex-direction: column; }
-        #map { flex-grow: 1; width: 100%; height: 100%; z-index: 1; }
+        #map { flex-grow: 1; width: 100%; height: 100%; }
         
-        /* Cabeçalho e Busca */
-        .header-section { position: absolute; top: 0; left: 0; right: 0; z-index: 20; background: linear-gradient(180deg, rgba(30, 64, 175, 0.9) 0%, rgba(255, 255, 255, 0) 100%); padding: 30px 20px 60px; pointer-events: none; }
-        .search-area { position: absolute; top: 100px; left: 15px; right: 15px; z-index: 30; pointer-events: auto; }
-        
-        /* Painel Inferior */
-        .bottom-panel { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.1); z-index: 40; padding: 20px; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Botões com Efeito Hover/Active */
+        .btn-blue { 
+            background-color: #2563eb; color: white; transition: all 0.2s ease; 
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; 
+        }
+        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .btn-blue:active { transform: scale(0.95); }
 
-        /* Efeitos de Hover e Botão */
-        .btn-blue { background-color: #2563eb; color: white; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; border: none; }
-        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 15px rgba(37, 99, 235, 0.3); }
-        .btn-blue:active { transform: scale(0.97); }
+        /* Cards da Lista com Hover */
+        .station-card { 
+            border: 1px solid #f1f5f9; border-radius: 20px; 
+            transition: all 0.2s ease; cursor: pointer; background: white;
+        }
+        .station-card:hover { background-color: #f8fafc; border-color: #2563eb; }
 
-        .station-card { border: 1px solid #f1f5f9; border-radius: 20px; transition: all 0.2s ease; cursor: pointer; }
-        .station-card:hover { background-color: #f8fafc; border-color: #3b82f6; transform: translateX(3px); }
+        .bottom-panel { 
+            position: absolute; bottom: 0; left: 0; right: 0; 
+            background: white; border-radius: 30px 30px 0 0; 
+            box-shadow: 0 -10px 30px rgba(0,0,0,0.08); z-index: 40; 
+            padding: 20px; transition: height 0.4s ease;
+        }
 
-        .type-badge { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 5px; background: #e2e8f0; color: #475569; text-transform: uppercase; }
-        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-        .scroll-area { overflow-y: auto; max-height: 300px; margin-top: 15px; padding-bottom: 20px; }
+        .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+        .scroll-area { overflow-y: auto; max-height: 280px; margin-top: 15px; }
         .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
-    <div class="header-section text-center">
-        <h1 class="text-white text-3xl font-black italic tracking-tighter">ESTAÇÃO FÁCIL</h1>
-        <p class="text-blue-100 text-[10px] font-bold">Encontre a estação mais próxima de você</p>
-    </div>
-
-    <div class="search-area">
-        <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
-            <div class="pl-4 text-gray-300"><i class="fas fa-search"></i></div>
-            <input type="text" id="pac-input" placeholder="Onde você está agora?" class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
-            <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
+    <div class="absolute top-0 left-0 right-0 z-20 p-6 pt-10 pointer-events-none">
+        <h1 class="text-white text-3xl font-black italic tracking-tighter drop-shadow-md">ESTAÇÃO FÁCIL</h1>
+        <div class="mt-6 pointer-events-auto">
+            <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
+                <input type="text" id="pac-input" placeholder="Buscar endereço..." class="w-full outline-none text-sm px-5 font-semibold text-gray-700">
+                <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase">BUSCAR</button>
+            </div>
         </div>
     </div>
 
@@ -60,27 +63,26 @@
             
             <div class="bg-gray-50 rounded-3xl p-5 border border-gray-100 my-4">
                 <div class="flex justify-between items-center">
-                    <div class="flex items-center">
+                    <div class="flex items-center gap-2">
                         <span id="main-dot" class="line-dot"></span>
-                        <span id="main-line" class="text-[13px] font-bold text-gray-600">---</span>
-                        <span id="main-type" class="type-badge ml-2">---</span>
+                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">---</span>
                     </div>
                     <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
                 </div>
-                <div class="mt-4 flex items-center gap-4 text-[11px] font-black">
-                    <span class="text-gray-400"><i class="fas fa-location-dot mr-1"></i> <span id="main-dist">0.0</span> km</span>
-                    <span class="text-green-600">R$ 5,40</span>
+                <div class="mt-4 flex items-center gap-4 text-[11px] font-black text-gray-400">
+                    <span><i class="fas fa-location-dot mr-1"></i> <span id="main-dist">0.0</span> km</span>
+                    <span class="text-green-600 italic">R$ 5,40</span>
                 </div>
             </div>
 
-            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2">
-                <i class="fas fa-paper-plane"></i> COMO CHEGAR LÁ
+            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-2">
+                COMO CHEGAR LÁ
             </button>
         </div>
 
         <div class="mt-6">
             <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400">
-                <span class="text-[11px] font-black uppercase tracking-widest">Outras Estações Próximas</span>
+                <span class="text-[11px] font-black uppercase tracking-widest">Estações e trens próximos</span>
                 <i id="list-icon" class="fas fa-chevron-up transition-transform"></i>
             </button>
             <div id="nearby-list" class="scroll-area hidden"></div>
@@ -89,40 +91,28 @@
 </div>
 
 <script>
-    let map, userMarker, markers = [], polyline, infoWindow;
-
-    // Base de dados com as estações da Linha Amarela (Pinheiros) para garantir acuracidade
-    const stationsData = [
-        { nome: 'Fradique Coutinho', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5662, lng: -46.6843, cor: '#fff000' },
-        { nome: 'Faria Lima', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5672, lng: -46.6931, cor: '#fff000' },
-        { nome: 'Oscar Freire', linha: 'Linha 4-Amarela', tipo: 'Metrô', lat: -23.5601, lng: -46.6719, cor: '#fff000' },
-        { nome: 'Marechal Deodoro', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5332, lng: -46.6558, cor: '#ee3135' },
-        { nome: 'Santa Cecília', linha: 'Linha 3-Vermelha', tipo: 'Metrô', lat: -23.5393, lng: -46.6489, cor: '#ee3135' }
-    ];
+    let map, userMarker, markers = [], infoWindow, service;
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
-            center: { lat: -23.5505, lng: -46.6333 }, zoom: 15, disableDefaultUI: true,
+            center: { lat: -23.5489, lng: -46.6388 }, zoom: 16, 
+            disableDefaultUI: true,
             styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
         });
+        
+        service = new google.maps.places.PlacesService(map);
         infoWindow = new google.maps.InfoWindow();
-        const input = document.getElementById("pac-input");
-        const autocomplete = new google.maps.places.Autocomplete(input);
-
+        
+        const autocomplete = new google.maps.places.Autocomplete(document.getElementById("pac-input"));
+        
         document.getElementById("search-btn").addEventListener("click", () => {
             const place = autocomplete.getPlace();
-            if (place && place.geometry) updatePosition(place.geometry.location);
+            if (place && place.geometry) searchNearbyStations(place.geometry.location);
         });
-
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(p => {
-                updatePosition(new google.maps.LatLng(p.coords.latitude, p.coords.longitude));
-            });
-        }
     }
 
-    function updatePosition(location) {
-        // LIMPEZA TOTAL PARA GARANTIR ACURACIDADE
+    function searchNearbyStations(location) {
+        // Limpeza Total
         if(userMarker) userMarker.setMap(null);
         markers.forEach(m => m.setMap(null));
         markers = [];
@@ -130,52 +120,60 @@
         map.setCenter(location);
         userMarker = new google.maps.Marker({
             position: location, map: map,
-            icon: {
-                url: 'https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/69616fc0d10a212f979c7ace/e0aceee08_png-transparent-google-street-view-street-view-trusted-google-maps-pegman-look-photography-logo-immersive-video-thumbnail1.png',
-                scaledSize: new google.maps.Size(45, 45), anchor: new google.maps.Point(22, 45)
-            }
+            icon: { url: 'https://maps.google.com/mapfiles/kml/paddle/wht-blank.png', scaledSize: new google.maps.Size(30, 30) }
         });
 
-        // Ordenação por distância real
-        const sorted = stationsData.map(s => {
-            const d = google.maps.geometry.spherical.computeDistanceBetween(location, new google.maps.LatLng(s.lat, s.lng));
-            return { ...s, dist: d / 1000 };
-        }).sort((a, b) => a.dist - b.dist);
+        // BUSCA REAL DO GOOGLE: Prioridade por distância física (RankBy.DISTANCE)
+        const request = {
+            location: location,
+            rankBy: google.maps.RankBy.DISTANCE,
+            types: ['subway_station', 'train_station']
+        };
 
-        renderList(sorted);
-        selectStation(sorted[0], false);
+        service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                const processed = results.map(place => ({
+                    nome: place.name,
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng(),
+                    dist: google.maps.geometry.spherical.computeDistanceBetween(location, place.geometry.location) / 1000
+                }));
+                
+                renderResults(processed);
+                selectStation(processed[0], false);
+            }
+        });
     }
 
-    function renderList(stations) {
+    function renderResults(stations) {
         const list = document.getElementById('nearby-list');
         list.innerHTML = "";
+        
         stations.forEach(s => {
             const marker = new google.maps.Marker({
                 position: { lat: s.lat, lng: s.lng }, map: map,
-                icon: {
-                    path: "M12 0C7.58 0 4 3.58 4 8c0 5.25 8 13 8 13s8-7.75 8-13c0-4.42-3.58-8-8-8zm0 11c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3z",
-                    fillColor: s.cor, fillOpacity: 1, strokeColor: "#FFF", strokeWeight: 2, scale: 1.5, anchor: new google.maps.Point(12, 21)
-                }
+                title: s.nome
             });
+            
             marker.addListener("click", () => {
-                infoWindow.setContent(`<div style="padding:10px"><b>${s.nome}</b><br>${s.linha}</div>`);
+                infoWindow.setContent(`<div class="p-2 font-bold">${s.nome}</div>`);
                 infoWindow.open(map, marker);
                 selectStation(s, true);
             });
             markers.push(marker);
 
             const card = document.createElement('div');
-            card.className = "station-card p-4 mb-3 flex justify-between items-center";
+            card.className = "station-card p-4 mb-3 flex justify-between items-center shadow-sm";
             card.onclick = () => selectStation(s, true);
             card.innerHTML = `
                 <div class="flex items-center gap-3">
-                    <span class="line-dot" style="background-color: ${s.cor}"></span>
+                    <span class="line-dot bg-blue-500"></span>
                     <div>
-                        <div class="flex items-center"><p class="text-[13px] font-black uppercase italic text-gray-800">${s.nome}</p><span class="type-badge ml-2">${s.tipo}</span></div>
-                        <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${s.dist.toFixed(1)} km • ${s.linha}</p>
+                        <p class="text-[13px] font-black uppercase italic text-gray-800">${s.nome}</p>
+                        <p class="text-[10px] text-gray-400 font-bold uppercase">${s.dist.toFixed(1)} km</p>
                     </div>
                 </div>
-                <p class="text-[11px] font-black text-green-600 italic">R$ 5,40</p>
+                <i class="fas fa-chevron-right text-gray-200"></i>
             `;
             list.appendChild(card);
         });
@@ -183,21 +181,11 @@
 
     function selectStation(s, collapse) {
         document.getElementById('main-name').innerText = s.nome;
-        document.getElementById('main-line').innerText = s.linha;
-        document.getElementById('main-dot').style.backgroundColor = s.cor;
-        document.getElementById('main-type').innerText = s.tipo;
         document.getElementById('main-dist').innerText = s.dist.toFixed(1);
+        document.getElementById('main-line').innerText = "Estação de Transporte";
+        document.getElementById('main-dot').className = "line-dot bg-blue-600";
         
         map.panTo({ lat: s.lat, lng: s.lng });
-
-        if(polyline) polyline.setMap(null);
-        polyline = new google.maps.Polyline({
-            path: [userMarker.getPosition(), { lat: s.lat, lng: s.lng }],
-            strokeColor: "#2563eb", strokeOpacity: 0,
-            icons: [{ icon: {path: 'M 0,-1 0,1', strokeOpacity: 1, scale: 2}, offset: '0', repeat: '18px' }],
-            map: map
-        });
-
         if(collapse) toggleList(true);
     }
 
@@ -213,8 +201,6 @@
         }
     }
 </script>
-
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAyeljGisp0yk242H4s3VC_xFeBwESDrjU&libraries=places,geometry&callback=initMap" async defer></script>
-
+<script src="https://maps.googleapis.com/maps/api/js?key=SUA_CHAVE_AQUI&libraries=places,geometry&callback=initMap" async defer></script>
 </body>
 </html>
