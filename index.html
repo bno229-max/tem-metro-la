@@ -18,15 +18,14 @@
         .bottom-panel { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-radius: 30px 30px 0 0; box-shadow: 0 -8px 30px rgba(0,0,0,0.1); z-index: 40; padding: 20px; transition: all 0.4s ease; }
 
         .btn-blue { background-color: #2563eb; color: white; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); cursor: pointer; border: none; }
-        .btn-blue:hover { background-color: #1d4ed8; transform: translateY(-1px); }
+        .btn-blue:hover { background-color: #1d4ed8; }
         .btn-blue:active { transform: scale(0.97); }
 
         .station-card { border: 1px solid #f1f5f9; border-radius: 20px; transition: all 0.2s ease; cursor: pointer; }
-        .station-card:hover { background-color: #f8fafc; border-color: #3b82f6; }
+        .station-card:hover { border-color: #3b82f6; background-color: #f8fafc; }
 
-        .type-badge { font-size: 8px; font-weight: 900; padding: 2px 6px; border-radius: 5px; background: #e2e8f0; color: #475569; text-transform: uppercase; }
         .line-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; margin-right: 10px; }
-        .scroll-area { overflow-y: auto; max-height: 300px; margin-top: 15px; padding-bottom: 20px; }
+        .scroll-area { overflow-y: auto; max-height: 280px; margin-top: 15px; padding-bottom: 20px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -35,13 +34,13 @@
 <div class="app-container">
     <div class="header-section text-center">
         <h1 class="text-white text-3xl font-black italic tracking-tighter">ESTAÇÃO FÁCIL</h1>
-        <p class="text-blue-100 text-[10px] font-bold">Encontre a estação mais próxima de você</p>
+        <p class="text-blue-100 text-[10px] font-bold uppercase tracking-widest">Encontre a estação mais próxima</p>
     </div>
 
     <div class="search-area">
         <div class="bg-white rounded-full shadow-2xl p-1.5 flex items-center">
             <div class="pl-4 text-gray-300"><i class="fas fa-search"></i></div>
-            <input type="text" id="pac-input" placeholder="Onde você está agora?" class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
+            <input type="text" id="pac-input" placeholder="Digite um endereço ou local..." class="w-full outline-none text-sm px-3 font-semibold text-gray-700">
             <button id="search-btn" class="btn-blue px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest">BUSCAR</button>
         </div>
     </div>
@@ -52,15 +51,14 @@
         <div class="flex justify-center mb-4"><div class="w-12 h-1 bg-gray-200 rounded-full"></div></div>
         
         <div id="selection-header">
-            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Mais próxima de você</span>
-            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">LOCALIZANDO...</h2>
+            <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Estação sugerida</span>
+            <h2 id="main-name" class="text-2xl font-black text-gray-900 uppercase italic mt-1 leading-none">...</h2>
             
             <div class="bg-gray-50 rounded-3xl p-5 border border-gray-100 my-4">
                 <div class="flex justify-between items-center">
                     <div class="flex items-center">
                         <span id="main-dot" class="line-dot bg-blue-600"></span>
-                        <span id="main-line" class="text-[13px] font-bold text-gray-600 italic">Identificando Linha...</span>
-                        <span id="main-type" class="type-badge ml-2">Metrô/Trem</span>
+                        <span class="text-[13px] font-bold text-gray-600 italic">Estação de Transporte</span>
                     </div>
                     <span class="text-[9px] font-black bg-green-100 text-green-600 px-2 py-1 rounded">ABERTA</span>
                 </div>
@@ -70,14 +68,14 @@
                 </div>
             </div>
 
-            <button id="btn-nav" class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2">
-                COMO CHEGAR LÁ
+            <button class="btn-blue w-full py-4 rounded-2xl font-black text-sm uppercase tracking-wider">
+                <i class="fas fa-paper-plane mr-2"></i> COMO CHEGAR LÁ
             </button>
         </div>
 
         <div class="mt-6">
             <button onclick="toggleList()" class="w-full flex justify-between items-center text-gray-400">
-                <span class="text-[11px] font-black uppercase tracking-widest">Outras Estações Próximas</span>
+                <span class="text-[11px] font-black uppercase tracking-widest">Lista de estações próximas</span>
                 <i id="list-icon" class="fas fa-chevron-up transition-transform"></i>
             </button>
             <div id="nearby-list" class="scroll-area hidden"></div>
@@ -86,49 +84,72 @@
 </div>
 
 <script>
-    let map, userMarker, markers = [], service, infoWindow;
+    let map, userMarker, markers = [], service, infoWindow, autocomplete;
 
     function initMap() {
         map = new google.maps.Map(document.getElementById("map"), {
             center: { lat: -23.5505, lng: -46.6333 }, 
-            zoom: 16, 
+            zoom: 15, 
             disableDefaultUI: true,
             styles: [{ featureType: "poi", stylers: [{ visibility: "off" }] }]
         });
         
         service = new google.maps.PlacesService(map);
         infoWindow = new google.maps.InfoWindow();
+        
         const input = document.getElementById("pac-input");
-        const autocomplete = new google.maps.places.Autocomplete(input);
-
+        autocomplete = new google.maps.places.Autocomplete(input);
+        
+        // CORREÇÃO: Escuta tanto o clique quanto o "Enter" no teclado
         document.getElementById("search-btn").addEventListener("click", () => {
-            const place = autocomplete.getPlace();
-            if (place && place.geometry) updatePosition(place.geometry.location);
+            executarBusca();
         });
 
-        // Localização Inicial Automática
+        input.addEventListener("keypress", (e) => {
+            if (e.key === "Enter") executarBusca();
+        });
+
+        // GPS Inicial
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(p => {
                 const pos = new google.maps.LatLng(p.coords.latitude, p.coords.longitude);
-                updatePosition(pos);
+                atualizarLocal(pos);
             });
         }
     }
 
-    function updatePosition(location) {
-        // Limpeza total
+    function executarBusca() {
+        const place = autocomplete.getPlace();
+        
+        // Se o usuário digitou mas não clicou na sugestão, usamos o Geocoding
+        if (!place || !place.geometry) {
+            const geocoder = new google.maps.Geocoder();
+            geocoder.geocode({ address: document.getElementById("pac-input").value }, (results, status) => {
+                if (status === "OK") {
+                    atualizarLocal(results[0].geometry.location);
+                } else {
+                    alert("Local não encontrado. Tente ser mais específico.");
+                }
+            });
+        } else {
+            atualizarLocal(place.geometry.location);
+        }
+    }
+
+    function atualizarLocal(location) {
         if(userMarker) userMarker.setMap(null);
         markers.forEach(m => m.setMap(null));
         markers = [];
 
         map.setCenter(location);
+        map.setZoom(16);
+
         userMarker = new google.maps.Marker({
             position: location, 
             map: map,
-            icon: { url: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png' }
+            icon: { url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png' }
         });
 
-        // BUSCA REAL POR DISTÂNCIA (Resolve o erro das estações longe)
         const request = {
             location: location,
             rankBy: google.maps.RankBy.DISTANCE,
@@ -137,7 +158,7 @@
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                const stations = results.slice(0, 5).map(r => ({
+                const stations = results.map(r => ({
                     nome: r.name,
                     lat: r.geometry.location.lat(),
                     lng: r.geometry.location.lng(),
@@ -155,16 +176,7 @@
         list.innerHTML = "";
         
         stations.forEach(s => {
-            const marker = new google.maps.Marker({
-                position: { lat: s.lat, lng: s.lng }, 
-                map: map
-            });
-            
-            marker.addListener("click", () => {
-                infoWindow.setContent(`<div style="padding:5px"><b>${s.nome}</b></div>`);
-                infoWindow.open(map, marker);
-                selectStation(s, true);
-            });
+            const marker = new google.maps.Marker({ position: { lat: s.lat, lng: s.lng }, map: map });
             markers.push(marker);
 
             const card = document.createElement('div');
@@ -178,7 +190,6 @@
                         <p class="text-[10px] text-gray-400 font-bold uppercase">${s.dist.toFixed(2)} km</p>
                     </div>
                 </div>
-                <i class="fas fa-chevron-right text-gray-200"></i>
             `;
             list.appendChild(card);
         });
@@ -193,13 +204,10 @@
 
     function toggleList(forceClose = false) {
         const list = document.getElementById('nearby-list');
-        const icon = document.getElementById('list-icon');
-        if(forceClose || !list.classList.contains('hidden')) {
+        if(forceClose) {
             list.classList.add('hidden');
-            icon.classList.remove('rotate-180');
         } else {
-            list.classList.remove('hidden');
-            icon.classList.add('rotate-180');
+            list.classList.toggle('hidden');
         }
     }
 </script>
